@@ -8,21 +8,26 @@ import (
 	"os"
 	"path/filepath"
 	"text/template"
-
-	"github.com/fatih/color"
+	"time"
 
 	"github.com/MarkusFreitag/advent-of-code/util"
+	"github.com/fatih/color"
 )
 
 const (
-	YEAR = 2015
-	DAY  = 3
+	YEAR = 2021
 )
 
 func main() {
-	fmt.Println("HELLO")
-	//day := time.Now().Day()
-	day := DAY
+	day := time.Now().Day()
+	fmt.Printf("downloading %d/%d\n", day, YEAR)
+
+	/* download input */
+	input, err := util.InputFromURL(YEAR, day)
+	if err != nil {
+		color.Red("error getting input: %s", err)
+		return
+	}
 
 	/* create day folder */
 	folder := fmt.Sprintf("%02d", day)
@@ -94,13 +99,7 @@ func main() {
 		return
 	}
 
-	/* download input */
-	input, err := util.InputFromURL(YEAR, day)
-	if err != nil {
-		color.Red("error getting input: %s", err)
-		return
-	}
-
+	/* store input */
 	err = ioutil.WriteFile(filepath.Join(path, "input"), []byte(input), 0777)
 	if err != nil {
 		color.Red("error writing input to file: %s", err)
