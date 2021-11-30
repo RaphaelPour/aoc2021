@@ -69,6 +69,31 @@ func main() {
 		return
 	}
 
+	/* Create unit test file */
+	fd, err = os.OpenFile(
+		filepath.Join(path, "part_test.go"),
+		os.O_RDWR|os.O_CREATE,
+		0777,
+	)
+	if err != nil {
+		color.Red(
+			"error creating part unittest file %s: %s",
+			filepath.Join(path, "part_test.go"),
+			err,
+		)
+		return
+	}
+
+	if err := templates.ExecuteTemplate(fd, "part_test.tpl", nil); err != nil {
+		color.Red("error executing part unittest template: %s", err)
+		return
+	}
+
+	if err := fd.Close(); err != nil {
+		color.Red("error writing part unittest file: %s", err)
+		return
+	}
+
 	/* download input */
 	input, err := util.InputFromURL(YEAR, day)
 	if err != nil {
@@ -82,5 +107,7 @@ func main() {
 		return
 	}
 
-	color.Green("Day %d is ready to solve :)", day)
+	color.Green("day %d is ready to solve :)", day)
+	color.Green(" code:", filepath.Join(path, "part.go"))
+	color.Green("tests:", filepath.Join(path, "part_test.go"))
 }
