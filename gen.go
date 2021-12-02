@@ -107,6 +107,6 @@ func main() {
 	}
 
 	color.Green("day %d is ready to solve :)", day)
-	color.Green(" code:", filepath.Join(path, "part.go"))
-	color.Green("tests:", filepath.Join(path, "part_test.go"))
+	color.Green(" code: %s", filepath.Join(path, "part.go"))
+	color.Green("tests: %s", filepath.Join(path, "part_test.go"))
 }
