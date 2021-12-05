@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/RaphaelPour/aoc2021/util"
@@ -59,4 +60,44 @@ func TestSeaMapLineDontSkipDiagonal(t *testing.T) {
 	require.Equal(t, 2, seaMap.Get(0, 0))
 	require.Equal(t, 1, seaMap.Get(0, 2))
 	require.Equal(t, 2, seaMap.Overlapping())
+
+}
+
+func TestSeaMapDiagonalTrivial(t *testing.T) {
+	seaMap := make(SeaMap)
+	seaMap.MarkLine(0, 0, 1, 1, false)
+
+	require.Equal(t, 1, seaMap.Get(0, 0))
+	require.Equal(t, 0, seaMap.Get(0, 1))
+	require.Equal(t, 0, seaMap.Get(1, 0))
+	require.Equal(t, 1, seaMap.Get(1, 1))
+	require.Equal(t, 0, seaMap.Overlapping())
+
+	seaMap.MarkLine(0, 0, 2, 2, false)
+	require.Equal(t, 2, seaMap.Overlapping())
+}
+
+func TestSeaMapUpDiagonal(t *testing.T) {
+	seaMap := make(SeaMap)
+	seaMap.MarkLine(2, 0, 0, 2, false)
+
+	require.Equal(t, 1, seaMap.Get(2, 0))
+	require.Equal(t, 1, seaMap.Get(1, 1))
+	require.Equal(t, 1, seaMap.Get(0, 2))
+	require.Equal(t, 0, seaMap.Overlapping())
+}
+
+func TestSeaMapDiagonalOverlapping(t *testing.T) {
+	seaMap := make(SeaMap)
+	seaMap.MarkLine(0, 0, 2, 2, false)
+	fmt.Println("-")
+	seaMap.MarkLine(2, 0, 0, 2, false)
+
+	require.Equal(t, 1, seaMap.Get(0, 0))
+	require.Equal(t, 2, seaMap.Get(1, 1))
+	require.Equal(t, 1, seaMap.Get(2, 2))
+	require.Equal(t, 1, seaMap.Get(2, 0))
+	require.Equal(t, 1, seaMap.Get(0, 2))
+
+	require.Equal(t, 1, seaMap.Overlapping())
 }
