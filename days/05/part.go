@@ -72,26 +72,14 @@ func (s SeaMap) MarkPoint(x, y int) {
 
 func (s SeaMap) MarkLine(x1, y1, x2, y2 int, skipDiagonal bool) {
 	if x1 == x2 {
-		start, end := y1, y2
-		if start > end {
-			start, end = end, start
-		}
-		for y := start; y <= end; y++ {
-			s.MarkPoint(x1, y)
+		for y := 0; y <= util.Abs(y1-y2); y++ {
+			s.MarkPoint(x1, y2+y*util.Sign(y1-y2))
 		}
 	} else if y1 == y2 {
-		start, end := x1, x2
-		if start > end {
-			start, end = end, start
+		for x := 0; x <= util.Abs(x1-x2); x++ {
+			s.MarkPoint(x2+x*util.Sign(x1-x2), y1)
 		}
-		for x := start; x <= end; x++ {
-			s.MarkPoint(x, y1)
-		}
-	} else {
-		if skipDiagonal {
-			return
-		}
-
+	} else if !skipDiagonal {
 		for y := 0; y <= util.Abs(y1-y2); y++ {
 			for x := 0; x <= util.Abs(x1-x2); x++ {
 				if x == y {
