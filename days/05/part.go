@@ -20,7 +20,7 @@ func NewSeaMap(input []string, skipDiagonal bool) (SeaMap, error) {
 	for _, line := range input {
 		match := pattern.FindStringSubmatch(line)
 		if len(match) != 5 {
-			panic(fmt.Sprintf("regex mismatch with '%s'", line))
+			return nil, fmt.Errorf("regex mismatch with '%s'", line)
 		}
 
 		fromX, err := strconv.Atoi(match[1])
