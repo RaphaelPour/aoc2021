@@ -91,6 +91,14 @@ func (s SeaMap) MarkLine(x1, y1, x2, y2 int, skipDiagonal bool) {
 		if skipDiagonal {
 			return
 		}
+
+		for y := 0; y <= util.Abs(y1-y2); y++ {
+			for x := 0; x <= util.Abs(x1-x2); x++ {
+				if x == y {
+					s.MarkPoint(x2+x*util.Sign(x1-x2), y2+y*util.Sign(y1-y2))
+				}
+			}
+		}
 	}
 }
 
@@ -133,7 +141,6 @@ func part1(input []string) int {
 		panic(err.Error())
 	}
 
-	seaMap.Dump()
 	return seaMap.Overlapping()
 }
 
@@ -143,7 +150,6 @@ func part2(input []string) int {
 		panic(err.Error())
 	}
 
-	seaMap.Dump()
 	return seaMap.Overlapping()
 }
 
