@@ -14,7 +14,7 @@ func TestExample(t *testing.T) {
 	require.Equal(t, 5, part1(input))
 }
 
-func TestRealInput(t *testing.T) {
+func TestRealInputPart1(t *testing.T) {
 	input := util.LoadString("input")
 
 	require.Equal(t, 6710, part1(input))
@@ -48,6 +48,12 @@ func TestExamplePart2(t *testing.T) {
 	input := util.LoadString("input_example")
 
 	require.Equal(t, 12, part2(input))
+}
+
+func TestRealInputPart2(t *testing.T) {
+	input := util.LoadString("input")
+
+	require.Equal(t, 20121, part2(input))
 }
 
 func TestSeaMapLineDontSkipDiagonal(t *testing.T) {
