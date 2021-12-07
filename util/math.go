@@ -36,6 +36,21 @@ func Max(nums ...int) int {
 	return max
 }
 
+func MinMax(nums ...int) (int, int) {
+	min := nums[0]
+	max := nums[0]
+	for _, num := range nums {
+		if num < min {
+			min = num
+		}
+
+		if num > max {
+			max = num
+		}
+	}
+	return min, max
+}
+
 func Pow(base, exp int) int {
 	result := base
 	for exp-1 > 0 {
