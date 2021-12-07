@@ -13,5 +13,5 @@ func TestExample(t *testing.T) {
 }
 
 func TestExample2(t *testing.T) {
-	require.Equal(t, 256, part1(util.LoadString("input_example")[0], 26984457539))
+	require.Equal(t, 26984457539, part2(util.LoadString("input_example")[0], 256))
 }
