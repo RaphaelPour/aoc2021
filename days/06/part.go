@@ -54,35 +54,38 @@ func calc(fish, days int) []int {
 
 func part2(input string, days int) int {
 	rawFishes := strings.Split(input, ",")
-	fishes := make([]int, len(rawFishes))
-	cache := make(map[int][]int, 0)
-	for i, fish := range rawFishes {
+	cache := make(map[int]int)
+
+	for _, fish := range rawFishes {
 		num, err := strconv.Atoi(fish)
 		if err != nil {
 			panic(err)
 		}
-		fishes[i] = num
 
-		if _, ok := cache[num]; !ok {
-			cache[num] = calc(num, 128)
-		}
+		value := cache[num]
+		value++
+		cache[num] = value
 	}
 
-	fmt.Println("Done caching")
-
-	for i := 0; i < 2; i++ {
-		fmt.Printf("round %d with size=%d\n", i, len(fishes))
-		for j, num := range fishes {
-			if _, ok := cache[num]; !ok {
-				fmt.Printf("caching %d\n", num)
-				cache[num] = calc(num, 64)
+	for day := 0; day < days; day++ {
+		newCache := make(map[int]int)
+		for age, sum := range cache {
+			if age == 0 {
+				newCache[8] = sum + newCache[8]
+				newCache[6] = sum + newCache[6]
+				continue
 			}
-			fishes = append(fishes[:j], fishes[j+1:]...)
-			fishes = append(fishes, cache[num]...)
+
+			newCache[age-1] = sum + newCache[age-1]
 		}
+		cache = newCache
 	}
 
-	return len(fishes)
+	total := 0
+	for _, sum := range cache {
+		total += sum
+	}
+	return total
 }
 
 func main() {
