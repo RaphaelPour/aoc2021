@@ -71,3 +71,11 @@ func TestRewire2(t *testing.T) {
 
 	require.Equal(t, 5, display.Connections["gbaed"])
 }
+
+func BenchmarkRewire(b *testing.B) {
+	input := util.LoadString("input_example_2")
+	for i := 0; i < b.N; i++ {
+		display, _ := NewDisplay(input[0])
+		display.Rewire()
+	}
+}
