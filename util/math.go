@@ -52,6 +52,9 @@ func MinMax(nums ...int) (int, int) {
 }
 
 func Pow(base, exp int) int {
+	if exp == 0 {
+		return 1
+	}
 	result := base
 	for exp-1 > 0 {
 		result *= base
