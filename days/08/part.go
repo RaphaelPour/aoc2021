@@ -63,7 +63,7 @@ func (d Display) Rewire() {
 
 	for _, out := range d.Segments {
 		length := len(out)
-		if _, ok := d.Numbers[6]; !ok && length == 6 && d.Numbers[9] != out && within(out, d.Numbers[8]) && sub(out, d.Numbers[1]) == 6 {
+		if _, ok := d.Numbers[6]; !ok && length == 6 && d.Numbers[9] != out && sub(out, d.Numbers[1]) == 6 {
 			d.Connections[out] = 6
 			d.Numbers[6] = out
 		} else if _, ok := d.Numbers[3]; !ok && length == 5 && within(d.Numbers[1], out) {
@@ -102,7 +102,7 @@ func (d Display) Result() (int, error) {
 			return -1, fmt.Errorf("%s missing in %#v", out, d.Connections)
 		}
 
-		result += num * util.Pow(10, len(d.Output)-i)
+		result += num * util.Pow(10, len(d.Output)-i-1)
 	}
 	return result, nil
 }
@@ -148,20 +148,23 @@ func within(needle, haystack string) bool {
 }
 
 func sub(a, b string) int {
-	result := util.Max(len(a), len(b))
-
-	if len(b) > len(a) {
-		a, b = b, a
+	hist := make(map[rune]int)
+	for _, c := range a {
+		hist[c] = hist[c] + 1
 	}
-	for i := 0; i < len(b); i++ {
-		for j := 0; j < len(a); j++ {
-			if b[i] == a[j] {
-				result--
-			}
+
+	for _, c := range b {
+		hist[c] = hist[c] + 1
+	}
+
+	diff := 0
+	for _, sum := range hist {
+		if sum != 2 {
+			diff++
 		}
 	}
 
-	return result
+	return diff
 }
 
 func part2(input []string) int {
@@ -189,5 +192,4 @@ func main() {
 
 	fmt.Println("== [ PART 2 ] ==")
 	fmt.Println(part2(util.LoadDefaultString()))
-	fmt.Println("too high: 7197754")
 }
