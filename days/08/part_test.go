@@ -18,15 +18,16 @@ func TestExamplePart2(t *testing.T) {
 func TestSub(t *testing.T) {
 	require.Equal(t, 1, sub("a", "ab"))
 	require.Equal(t, 1, sub("ab", "b"))
-	require.Equal(t, 1, sub("a", "b"))
+	require.Equal(t, 2, sub("a", "b"))
 
 	require.Equal(t, 0, sub("abc", "abc"))
 	require.Equal(t, 0, sub("bca", "abc"))
 	require.Equal(t, 1, sub("bcda", "abc"))
 
 	require.Equal(t, 2, sub("cefabd", "eafb"))
-	require.Equal(t, 2, sub("fbcad", "eafb"))
+	require.Equal(t, 3, sub("fbcad", "eafb"))
 
+	require.Equal(t, 6, sub("cdfgeb", "ab"))
 }
 
 func TestWithin(t *testing.T) {
@@ -63,5 +64,10 @@ func TestRewire2(t *testing.T) {
 	require.Nil(t, err)
 	display.Rewire()
 
-	require.Equal(t, 5, display.Connections["baged"])
+	require.Equal(t, 1, display.Connections["fb"])
+	require.Equal(t, 4, display.Connections["bgfa"])
+	require.Equal(t, 7, display.Connections["fdb"])
+	require.Equal(t, 8, display.Connections["dagfbce"])
+
+	require.Equal(t, 5, display.Connections["gbaed"])
 }
