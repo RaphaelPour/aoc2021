@@ -31,7 +31,7 @@ func main() {
 
 			// 0 should be white and 9 very black
 			// spread the gray values accors the whole range
-			c := uint8(255.0 - (255.0 / 9.0 * float64(num)))
+			c := uint8(255.0 - (255.0 / 9.0 * float64(num-num%2)))
 			image.Set(x, y,
 				color.NRGBA{R: c, G: c, B: c, A: 255},
 			)
