@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"image"
 	"image/color"
@@ -11,15 +12,42 @@ import (
 	"time"
 
 	"github.com/RaphaelPour/aoc2021/util"
+	"github.com/deadsy/sdfx/render"
+	"github.com/deadsy/sdfx/sdf"
 )
 
-func main() {
-	if len(os.Args) != 2 {
-		fmt.Printf("usage: %s <path puzzle input>\n", os.Args[0])
-		return
+var (
+	InputFile = flag.String("input", "./input", "Path to puzzle input")
+	HeightMap = flag.Bool("height-map", false, "Generate a height map")
+	STL       = flag.Bool("stl", false, "Generates a block-based STL file")
+)
+
+func renderSTL(input []string) {
+	filename := fmt.Sprintf("day09_%d.stl", time.Now().Unix())
+
+	boxes := make([]sdf.SDF3, len(input)*len(input[0]))
+	index := 0
+	for y, row := range input {
+		for x, cell := range row {
+			num, err := strconv.Atoi(string(cell))
+			if err != nil {
+				fmt.Printf("error converting %d\n", cell)
+				return
+			}
+			box2d := sdf.Box2D(sdf.V2{1, 1}, 0)
+			// add one so level 0 has one unit
+			height := float64(num+1) / 10
+			box3d := sdf.Extrude3D(box2d, height)
+			m := sdf.Translate3d(sdf.V3{float64(x), float64(y), height / 2})
+			boxes[index] = sdf.Transform3D(box3d, m)
+			index++
+		}
 	}
 
-	input := util.LoadString(os.Args[1])
+	render.RenderSTL(sdf.Union3D(boxes...), 100, filename)
+}
+
+func renderHeightMap(input []string) {
 	image := image.NewNRGBA(image.Rect(0, 0, len(input[0]), len(input)))
 	for y, row := range input {
 		for x, cell := range row {
@@ -38,7 +66,7 @@ func main() {
 		}
 	}
 
-	filename := fmt.Sprintf("image_%d.png", time.Now().Unix())
+	filename := fmt.Sprintf("day09_%d.png", time.Now().Unix())
 	f, err := os.Create(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -49,6 +77,17 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+}
 
-	fmt.Printf("rendered %s to %s\n", os.Args[1], filename)
+func main() {
+	flag.Parse()
+
+	input := util.LoadString(*InputFile)
+	if *HeightMap {
+		renderHeightMap(input)
+	}
+
+	if *STL {
+		renderSTL(input)
+	}
 }
