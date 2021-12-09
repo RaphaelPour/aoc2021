@@ -23,12 +23,23 @@ var (
 )
 
 func renderSTL(input []string) {
-	filename := fmt.Sprintf("day09_%d.stl", time.Now().Unix())
+	filename := "day09.stl"
+	boxes := make([]sdf.SDF3, 0)
 
-	boxes := make([]sdf.SDF3, len(input)*len(input[0]))
-	index := 0
+	plate2d := sdf.Box2D(sdf.V2{float64(len(input)), float64(len(input[0]))}, 1)
+	plate3d := sdf.Extrude3D(plate2d, 2.0)
+	plateM := sdf.Translate3d(sdf.V3{
+		float64(len(input)) / 2,
+		float64(len(input[0])) / 2,
+		0,
+	})
+
+	boxes = append(boxes, sdf.Transform3D(plate3d, plateM))
 	for y, row := range input {
 		for x, cell := range row {
+			if cell == '0' {
+				continue
+			}
 			num, err := strconv.Atoi(string(cell))
 			if err != nil {
 				fmt.Printf("error converting %d\n", cell)
@@ -36,15 +47,18 @@ func renderSTL(input []string) {
 			}
 			box2d := sdf.Box2D(sdf.V2{1, 1}, 0)
 			// add one so level 0 has one unit
-			height := float64(num+1) / 10
+			height := float64(num + 1)
 			box3d := sdf.Extrude3D(box2d, height)
 			m := sdf.Translate3d(sdf.V3{float64(x), float64(y), height / 2})
-			boxes[index] = sdf.Transform3D(box3d, m)
-			index++
+			boxes = append(boxes, sdf.Transform3D(box3d, m))
+
 		}
 	}
 
-	render.RenderSTL(sdf.Union3D(boxes...), 100, filename)
+	fmt.Printf("generated %d boxes\n", len(boxes))
+	start := time.Now()
+	render.RenderSTL(sdf.Union3D(boxes...), 400, filename)
+	fmt.Printf("needed %s\n", time.Since(start))
 }
 
 func renderHeightMap(input []string) {
