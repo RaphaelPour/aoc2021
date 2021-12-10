@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/RaphaelPour/aoc2021/util"
 )
@@ -13,6 +14,12 @@ var (
 		"}": 1197,
 		">": 25137,
 	}
+	parScore2 = map[string]int{
+		")": 1,
+		"]": 2,
+		"}": 3,
+		">": 4,
+	}
 	counterpart = map[string]string{
 		"[": "]",
 		"(": ")",
@@ -22,8 +29,10 @@ var (
 )
 
 type Line struct {
-	input string
-	score int
+	input     string
+	score     int
+	tail      string
+	corrupted bool
 }
 
 func NewLine(input string) *Line {
@@ -61,7 +70,6 @@ func (l *Line) Empty() bool {
 }
 
 func (l *Line) Reduce() bool {
-	// fmt.Printf("reducing %s\n", l.input)
 	if l.Empty() {
 		return true
 	}
@@ -76,18 +84,7 @@ func (l *Line) Reduce() bool {
 				return true
 			}
 			if l.score == 0 {
-				l.score = -1
-				fmt.Printf("%s: %s\n", par, l.input)
-				if !l.Empty() {
-					s := parScore[string(l.input[0])]
-					fmt.Printf(
-						"expected %s, got %s instead, adding %d to score\n",
-						par,
-						l.input,
-						s,
-					)
-					l.score = s
-				}
+				l.score = parScore[string(l.input[0])]
 			}
 			return false
 		}
@@ -95,28 +92,64 @@ func (l *Line) Reduce() bool {
 	return true
 }
 
+func (l *Line) Reduce2() bool {
+	if l.Empty() {
+		return true
+	}
+
+	for _, par := range []string{"(", "[", "{", "<"} {
+		if l.Accept(par) {
+			cpar := counterpart[par]
+			if l.Reduce2() && l.Accept(cpar) {
+				return l.Reduce2()
+			}
+
+			if l.Empty() {
+				l.tail += cpar
+				l.score = l.score*5 + parScore2[cpar]
+				return true
+			}
+
+			// corrupted
+			return false
+		}
+	}
+	// nothing to reduce, like a closed par
+	return true
+}
+
 func part1(input []string) int {
 	sum := 0
 	for _, l := range input {
 		line := NewLine(l)
-		// fmt.Println(line)
-		ok := line.Reduce()
-		fmt.Println(ok, line.score)
+		line.Reduce()
 		sum += line.score
 	}
 	return sum
 }
 
-func part2() {
+func part2(input []string) int {
+	scores := make([]int, 0)
+	for _, l := range input {
+		line := NewLine(l)
+		if line.Reduce2() {
+			scores = append(scores, line.score)
+		}
+	}
 
+	if len(scores) == 0 {
+		fmt.Println("Nothing found")
+		return -1
+	}
+
+	sort.Ints(scores)
+	return scores[len(scores)/2]
 }
 
 func main() {
 	fmt.Println("== [ PART 1 ] ==")
 	fmt.Println(part1(util.LoadDefaultString()))
-	fmt.Println("bad answer: 268854, 288240")
-	fmt.Println("too high  : 487878")
 
 	fmt.Println("== [ PART 2 ] ==")
-	part2()
+	fmt.Println(part2(util.LoadString("input")))
 }

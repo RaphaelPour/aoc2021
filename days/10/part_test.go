@@ -27,6 +27,10 @@ func TestExample(t *testing.T) {
 	require.Equal(t, 26397, part1(util.LoadString("input_example")))
 }
 
+func TestExample2(t *testing.T) {
+	require.Equal(t, 288957, part2(util.LoadString("input_example")))
+}
+
 func TestReduce1(t *testing.T) {
 	l := NewLine("{}")
 	ok := l.Reduce()
@@ -85,24 +89,17 @@ func TestReduce8(t *testing.T) {
 
 func TestBad1(t *testing.T) {
 	l := NewLine("(")
-	require.False(t, l.Reduce())
-	require.Equal(t, -1, l.score)
+	require.True(t, l.Reduce())
 }
 
 func TestBad2(t *testing.T) {
 	l := NewLine("([")
-	ok := l.Reduce()
-	require.Equal(t, l.input, "")
-	require.False(t, ok)
-	require.Equal(t, -1, l.score)
+	require.True(t, l.Reduce())
 }
 
 func TestBad3(t *testing.T) {
 	l := NewLine("([]")
-	ok := l.Reduce()
-	require.Equal(t, l.input, "")
-	require.False(t, ok)
-	require.Equal(t, -1, l.score)
+	require.True(t, l.Reduce())
 }
 
 func TestBad5(t *testing.T) {
@@ -111,4 +108,12 @@ func TestBad5(t *testing.T) {
 	require.Equal(t, l.input, "}")
 	require.False(t, ok)
 	require.Equal(t, parScore["}"], l.score)
+}
+
+func TestReduce21(t *testing.T) {
+	l := NewLine("[()()")
+	ok := l.Reduce2()
+	require.Equal(t, "", l.input)
+	require.Equal(t, "]", l.tail)
+	require.True(t, ok)
 }
