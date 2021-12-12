@@ -42,44 +42,45 @@ func NewCaves(input []string) *Caves {
 	return c
 }
 
-func (c Caves) pathExamine(start string, visited string) int {
+func (c Caves) pathExamine(start string, visited string, smallCave string, path string) int {
+	path += "-" + start
 	if unicode.IsLower(rune(start[0])) {
 		visited += start + ","
 	}
 	if start == "end" {
-		fmt.Println(visited)
 		return 1
 	}
 
 	paths := 0
 	for _, neighbor := range c.paths[start] {
 		if strings.Contains(visited, neighbor) {
+			if smallCave != "" || neighbor == "start" {
+				continue
+			}
+			paths += c.pathExamine(neighbor, visited, neighbor, path)
 			continue
 		}
 
-		paths += c.pathExamine(neighbor, visited)
+		paths += c.pathExamine(neighbor, visited, smallCave, path)
 	}
 	return paths
 }
 
-func (c Caves) PathCount() int {
-	return c.pathExamine("start", "")
-}
-
 func part1(input []string) int {
 	c := NewCaves(input)
-	return c.PathCount()
+	return c.pathExamine("start", "", "NOPE", "")
 }
 
-func part2() {
-
+func part2(input []string) int {
+	c := NewCaves(input)
+	return c.pathExamine("start", "", "", "")
 }
 
 func main() {
 	fmt.Println("== [ PART 1 ] ==")
 	fmt.Println(part1(util.LoadString("input")))
-	fmt.Println("bad: 674")
 
 	fmt.Println("== [ PART 2 ] ==")
-	part2()
+	fmt.Println(part2(util.LoadString("input")))
+	fmt.Println("bad: 20806")
 }
