@@ -168,26 +168,27 @@ func (p *Paper) Fold(dump bool) {
 						delete(p.fields[y], mirrorI)
 					}
 				}
+				//fmt.Printf(" after sum: %d\n", p.DotCount())
 			} else {
 				mirrorI := height - i - 1
 				// fold y axis, go through all fields on the bottom and top
 				// half separately
-				for x := range p.fields[i] {
-					p.fields[i][x] = p.fields[i][x] || p.fields[mirrorI][x]
-				}
 				for x := range p.fields[mirrorI] {
 					// there could be mirrored y lines at the bottom half
 					// that have no point at the top half yet.
-					if _, ok := p.fields[i]; !ok {
-						p.fields[i] = make(map[int]bool)
+					if p.fields[mirrorI][x] {
+						if _, ok := p.fields[i]; !ok {
+							p.fields[i] = make(map[int]bool)
+						}
+						p.fields[i][x] = true
 					}
-					p.fields[i][x] = p.fields[i][x] || p.fields[mirrorI][x]
 				}
 
 				// delete whole line at the bottom half
 				delete(p.fields, mirrorI)
 			}
 		}
+
 		// remove fold axis
 		if fold.axis == "x" {
 			for y := range p.fields {
