@@ -169,16 +169,11 @@ func (p *Paper) Fold(dump bool) {
 				}
 				// fold x axis
 				for y := range p.fields {
-					/*
-						fmt.Printf(
-							"set %d,%d to %#v || %#v = %#v\n",
-							i, y,
-							p.fields[y][i], p.fields[y][mirrorI],
-							p.fields[y][i] || p.fields[y][mirrorI],
-						)*/
-					p.fields[y][i] = p.fields[y][i] || p.fields[y][mirrorI]
-					// delete right side
-					delete(p.fields[y], mirrorI)
+					if _, ok := p.fields[y][mirrorI]; ok {
+						fmt.Printf("change %d|%d from %t to %t\n", y, i, p.fields[y][i], (p.fields[y][i] || p.fields[y][mirrorI]))
+						p.fields[y][i] = true
+						delete(p.fields[y], mirrorI)
+					}
 				}
 			} else {
 				mirrorI := height - i - 1
