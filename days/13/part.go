@@ -206,13 +206,16 @@ func (p *Paper) Fold(dump bool) {
 
 func (p *Paper) DotCount() int {
 	sum := 0
+	sum2 := 0
 	for _, row := range p.fields {
+		sum2 += len(row)
 		for _, cell := range row {
 			if cell {
 				sum++
 			}
 		}
 	}
+	fmt.Printf("sum2: %d\n", sum2)
 	return sum
 }
 
