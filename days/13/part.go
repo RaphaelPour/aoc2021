@@ -110,11 +110,28 @@ func (p Paper) Height() int {
 	return max + 1 + (max % 2)
 }
 
+func (p Paper) Output() string {
+	height := p.Height()
+	width := p.Width()
+	out := ""
+
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			if p.fields[y][x] {
+				out += "#"
+			} else {
+				out += "."
+			}
+		}
+		out += "\n"
+	}
+	return out
+}
+
 func (p Paper) Dump(axisX, axisY int) {
 	height := p.Height()
 	width := p.Width()
 
-	fmt.Println("------")
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			if axisX == x {
@@ -131,30 +148,16 @@ func (p Paper) Dump(axisX, axisY int) {
 	}
 }
 
-func (p *Paper) Fold(dump bool) {
-	// store width and height to increase performance as they get
-	// calculated by processing the fields
-	width := p.Width()
-	height := p.Height()
-
+func (p *Paper) Fold() {
 	// apply each fold in the order of the fold list
 	for _, fold := range p.folds {
-		fmt.Println(fold)
-		fmt.Printf("sum before fold '%s': %d\n", fold, p.DotCount())
-		// print field with axis if dumping is enabled for debugging
-		if dump {
-			if fold.axis == "x" {
-				p.Dump(fold.offset, NO_AXIS)
-			} else {
-				p.Dump(NO_AXIS, fold.offset)
-			}
-		}
 		// for each index from 0 to the axis
 		for i := 0; i < fold.offset; i++ {
+			// e.g. width=10 and i=0, the index needs to be 9
+			mirrorI := (2 * fold.offset) - i
+
 			// differ between x axis (x coord is constant) and y axis (y const)
 			if fold.axis == "x" {
-				// e.g. width=10 and i=0, the index needs to be 9
-				mirrorI := width - i - 1
 
 				// red flag that fold offset and mirrorI are calculated
 				// correctly
@@ -168,10 +171,7 @@ func (p *Paper) Fold(dump bool) {
 						delete(p.fields[y], mirrorI)
 					}
 				}
-				//fmt.Printf(" after sum: %d\n", p.DotCount())
 			} else {
-				mirrorI := height - i - 1
-
 				if _, ok := p.fields[mirrorI]; !ok {
 					continue
 				}
@@ -185,8 +185,6 @@ func (p *Paper) Fold(dump bool) {
 						p.fields[i] = make(map[int]bool)
 					}
 
-					fmt.Printf("fold %d to %d with height %d\n", i, mirrorI, height)
-
 					p.fields[i][x] = true
 				}
 
@@ -197,60 +195,33 @@ func (p *Paper) Fold(dump bool) {
 
 		// remove fold axis
 		if fold.axis == "x" {
-			width = fold.offset
 			for y := range p.fields {
 				delete(p.fields[y], fold.offset)
 			}
 		} else {
-			height = fold.offset
 			delete(p.fields, fold.offset)
 		}
-
-		if dump {
-			p.Dump(NO_AXIS, NO_AXIS)
-		}
-
-		fmt.Printf("sum after fold '%s': %d\n", fold, p.DotCount())
 	}
 }
 
 func (p *Paper) DotCount() int {
 	sum := 0
-	sum2 := 0
 	for _, row := range p.fields {
-		sum2 += len(row)
-		for _, cell := range row {
-			if cell {
-				sum++
-			}
-		}
+		sum += len(row)
 	}
-	fmt.Printf("sum2: %d\n", sum2)
 	return sum
 }
 
 func part1(input []string) int {
 	p := NewPaper(input, true)
-
-	dump := false
-	if dump {
-		p.Dump(NO_AXIS, NO_AXIS)
-	}
-	p.Fold(dump)
+	p.Fold()
 	return p.DotCount()
 }
 
-func part2(input []string) int {
+func part2(input []string) string {
 	p := NewPaper(input, false)
-
-	dump := false
-	if dump {
-		p.Dump(NO_AXIS, NO_AXIS)
-	}
-	p.Fold(dump)
-	// p.Dump(NO_AXIS, NO_AXIS)
-	return p.DotCount()
-
+	p.Fold()
+	return p.Output()
 }
 
 func main() {
@@ -259,6 +230,5 @@ func main() {
 	fmt.Println(part1(util.LoadString(input)))
 
 	fmt.Println("== [ PART 2 ] ==")
-	fmt.Println(part2(util.LoadString("input_markus")))
 	fmt.Println(part2(util.LoadString(input)))
 }
