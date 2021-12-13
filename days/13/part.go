@@ -137,7 +137,6 @@ func (p *Paper) Fold(dump bool) {
 
 		// print field with axis if dumping is enabled for debugging
 		if dump {
-			fmt.Println(fold)
 			if fold.axis == "x" {
 				p.Dump(fold.offset, NO_AXIS)
 			} else {
@@ -186,25 +185,9 @@ func (p *Paper) Fold(dump bool) {
 				// fold y axis, go through all fields on the bottom and top
 				// half separately
 				for x := range p.fields[i] {
-					/*
-						fmt.Printf(
-							"set %d,%d to %#v || %#v = %#v\n",
-							x, i,
-							p.fields[i][x], p.fields[mirrorI][x],
-							p.fields[i][x] || p.fields[mirrorI][x],
-						)*/
-
 					p.fields[i][x] = p.fields[i][x] || p.fields[mirrorI][x]
 				}
 				for x := range p.fields[mirrorI] {
-					/*
-						fmt.Printf(
-							"set %d,%d to %#v || %#v = %#v\n",
-							x, i,
-							p.fields[i][x], p.fields[mirrorI][x],
-							p.fields[i][x] || p.fields[mirrorI][x],
-						)*/
-
 					// there could be mirrored y lines at the bottom half
 					// that have no point at the top half yet.
 					if _, ok := p.fields[i]; !ok {
