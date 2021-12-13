@@ -159,13 +159,6 @@ func (p *Paper) Fold(dump bool) {
 				// correctly
 				if mirrorI == fold.offset {
 					break
-					/*
-						panic(fmt.Sprintf(
-							"x offset %d should never be fold offset %d!",
-							mirrorI,
-							fold.offset,
-						))
-					*/
 				}
 				// fold x axis
 				for y := range p.fields {
