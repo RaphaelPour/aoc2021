@@ -150,7 +150,7 @@ func (p *Paper) Fold(dump bool) {
 		width := p.Width()
 		height := p.Height()
 		// for each index from 0 to the axis
-		for i := 0; i < fold.offset-1; i++ {
+		for i := 0; i < fold.offset; i++ {
 			// differ between x axis (x coord is constant) and y axis (y const)
 			if fold.axis == "x" {
 				// e.g. width=10 and i=0, the index needs to be 9
@@ -159,11 +159,14 @@ func (p *Paper) Fold(dump bool) {
 				// red flag that fold offset and mirrorI are calculated
 				// correctly
 				if mirrorI == fold.offset {
-					panic(fmt.Sprintf(
-						"x offset %d should never be fold offset %d!",
-						mirrorI,
-						fold.offset,
-					))
+					break
+					/*
+						panic(fmt.Sprintf(
+							"x offset %d should never be fold offset %d!",
+							mirrorI,
+							fold.offset,
+						))
+					*/
 				}
 				// fold x axis
 				for y := range p.fields {
@@ -252,16 +255,26 @@ func part1(input []string) int {
 	return p.DotCount()
 }
 
-func part2() {
+func part2(input []string) int {
+	p := NewPaper(input, false)
+
+	dump := false
+	if dump {
+		p.Dump(NO_AXIS, NO_AXIS)
+	}
+	p.Fold(dump)
+	p.Dump(NO_AXIS, NO_AXIS)
+	return p.DotCount()
 
 }
 
 func main() {
+	input := "input_example"
 	fmt.Println("== [ PART 1 ] ==")
-	fmt.Println(part1(util.LoadString("input")))
+	fmt.Println(part1(util.LoadString(input)))
 	fmt.Println("too high: 799")
 	fmt.Println("bad: 640")
 
 	fmt.Println("== [ PART 2 ] ==")
-	part2()
+	fmt.Println(part2(util.LoadString(input)))
 }
