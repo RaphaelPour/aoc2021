@@ -96,7 +96,7 @@ func (p Paper) Width() int {
 			}
 		}
 	}
-	return max + 1
+	return max + 1 + (max % 2)
 }
 
 func (p Paper) Height() int {
@@ -106,14 +106,32 @@ func (p Paper) Height() int {
 			max = y
 		}
 	}
-	return max + 1
+
+	return max + 1 + (max % 2)
+}
+
+func (p Paper) Output() string {
+	height := p.Height()
+	width := p.Width()
+	out := ""
+
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			if p.fields[y][x] {
+				out += "#"
+			} else {
+				out += "."
+			}
+		}
+		out += "\n"
+	}
+	return out
 }
 
 func (p Paper) Dump(axisX, axisY int) {
 	height := p.Height()
 	width := p.Width()
 
-	fmt.Println("------")
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			if axisX == x {
@@ -130,90 +148,51 @@ func (p Paper) Dump(axisX, axisY int) {
 	}
 }
 
-func (p *Paper) Fold(dump bool) {
+func (p *Paper) Fold() {
 	// apply each fold in the order of the fold list
 	for _, fold := range p.folds {
-		fmt.Println(fold)
-
-		// print field with axis if dumping is enabled for debugging
-		if dump {
-			fmt.Println(fold)
-			if fold.axis == "x" {
-				p.Dump(fold.offset, NO_AXIS)
-			} else {
-				p.Dump(NO_AXIS, fold.offset)
-			}
-		}
-
-		// store width and height to increase performance as they get
-		// calculated by processing the fields
-		width := p.Width()
-		height := p.Height()
 		// for each index from 0 to the axis
-		for i := 0; i < fold.offset-1; i++ {
+		for i := 0; i < fold.offset; i++ {
+			// e.g. width=10 and i=0, the index needs to be 9
+			mirrorI := (2 * fold.offset) - i
+
 			// differ between x axis (x coord is constant) and y axis (y const)
 			if fold.axis == "x" {
-				// e.g. width=10 and i=0, the index needs to be 9
-				mirrorI := width - i - 1
 
 				// red flag that fold offset and mirrorI are calculated
 				// correctly
 				if mirrorI == fold.offset {
-					panic(fmt.Sprintf(
-						"x offset %d should never be fold offset %d!",
-						mirrorI,
-						fold.offset,
-					))
+					break
 				}
 				// fold x axis
 				for y := range p.fields {
-					/*
-						fmt.Printf(
-							"set %d,%d to %#v || %#v = %#v\n",
-							i, y,
-							p.fields[y][i], p.fields[y][mirrorI],
-							p.fields[y][i] || p.fields[y][mirrorI],
-						)*/
-					p.fields[y][i] = p.fields[y][i] || p.fields[y][mirrorI]
-					// delete right side
-					delete(p.fields[y], mirrorI)
+					if _, ok := p.fields[y][mirrorI]; ok {
+						p.fields[y][i] = true
+						delete(p.fields[y], mirrorI)
+					}
 				}
 			} else {
-				mirrorI := height - i - 1
+				if _, ok := p.fields[mirrorI]; !ok {
+					continue
+				}
+
 				// fold y axis, go through all fields on the bottom and top
 				// half separately
-				for x := range p.fields[i] {
-					/*
-						fmt.Printf(
-							"set %d,%d to %#v || %#v = %#v\n",
-							x, i,
-							p.fields[i][x], p.fields[mirrorI][x],
-							p.fields[i][x] || p.fields[mirrorI][x],
-						)*/
-
-					p.fields[i][x] = p.fields[i][x] || p.fields[mirrorI][x]
-				}
 				for x := range p.fields[mirrorI] {
-					/*
-						fmt.Printf(
-							"set %d,%d to %#v || %#v = %#v\n",
-							x, i,
-							p.fields[i][x], p.fields[mirrorI][x],
-							p.fields[i][x] || p.fields[mirrorI][x],
-						)*/
-
 					// there could be mirrored y lines at the bottom half
 					// that have no point at the top half yet.
 					if _, ok := p.fields[i]; !ok {
 						p.fields[i] = make(map[int]bool)
 					}
-					p.fields[i][x] = p.fields[i][x] || p.fields[mirrorI][x]
+
+					p.fields[i][x] = true
 				}
 
 				// delete whole line at the bottom half
 				delete(p.fields, mirrorI)
 			}
 		}
+
 		// remove fold axis
 		if fold.axis == "x" {
 			for y := range p.fields {
@@ -222,46 +201,34 @@ func (p *Paper) Fold(dump bool) {
 		} else {
 			delete(p.fields, fold.offset)
 		}
-
-		if dump {
-			p.Dump(NO_AXIS, NO_AXIS)
-		}
 	}
 }
 
 func (p *Paper) DotCount() int {
 	sum := 0
 	for _, row := range p.fields {
-		for _, cell := range row {
-			if cell {
-				sum++
-			}
-		}
+		sum += len(row)
 	}
 	return sum
 }
 
 func part1(input []string) int {
 	p := NewPaper(input, true)
-
-	dump := false
-	if dump {
-		p.Dump(NO_AXIS, NO_AXIS)
-	}
-	p.Fold(dump)
+	p.Fold()
 	return p.DotCount()
 }
 
-func part2() {
-
+func part2(input []string) string {
+	p := NewPaper(input, false)
+	p.Fold()
+	return p.Output()
 }
 
 func main() {
+	input := "input"
 	fmt.Println("== [ PART 1 ] ==")
-	fmt.Println(part1(util.LoadString("input")))
-	fmt.Println("too high: 799")
-	fmt.Println("bad: 640")
+	fmt.Println(part1(util.LoadString(input)))
 
 	fmt.Println("== [ PART 2 ] ==")
-	part2()
+	fmt.Println(part2(util.LoadString(input)))
 }

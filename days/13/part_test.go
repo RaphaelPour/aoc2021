@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/RaphaelPour/aoc2021/util"
@@ -21,7 +20,24 @@ func TestNewPaper(t *testing.T) {
 
 	require.Equal(t, 9, len(p.fields))
 	cells, ok := p.fields[10]
-	fmt.Println(cells)
 	require.True(t, ok)
 	require.Equal(t, 4, len(cells))
+}
+
+func TestYFold(t *testing.T) {
+	input := []string{
+		"2,0", "", "fold along x=1",
+	}
+	p := NewPaper(input, false)
+
+	require.Equal(t, 1, len(p.folds))
+	require.Equal(t, "x", p.folds[0].axis)
+	require.Equal(t, 1, p.folds[0].offset)
+
+	require.Equal(t, 1, len(p.fields))
+
+	p.Fold()
+	require.Equal(t, 1, len(p.fields))
+	require.Equal(t, 1, len(p.fields[0]))
+	require.True(t, p.fields[0][0])
 }
