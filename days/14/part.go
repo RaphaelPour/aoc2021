@@ -33,7 +33,7 @@ func NewRuleSet(input []string) *RuleSet {
 
 	for i := 0; i < len(r.start)-1; i++ {
 		pair := r.start[i : i+2]
-		r.pairMap[pair] = 1
+		r.pairMap[pair] = r.pairMap[pair] + 1
 	}
 
 	return r
@@ -65,9 +65,7 @@ func (rs *RuleSet) SubstituteFast2() {
 		pair2 := conclusion + string(premise[1])
 
 		newPairs[pair1] = newPairs[pair1] + rs.pairMap[premise]
-		if pair1 != pair2 {
-			newPairs[pair2] = newPairs[pair2] + rs.pairMap[premise]
-		}
+		newPairs[pair2] = newPairs[pair2] + rs.pairMap[premise]
 	}
 
 	rs.pairMap = newPairs
@@ -213,5 +211,5 @@ func main() {
 	fmt.Println("== [ PART 2 ] ==")
 	fmt.Println(part2(util.LoadString(input)))
 	fmt.Println("too high: 4288726369828")
-	fmt.Println("bad: 3277772741531")
+	fmt.Println("to low: 3277772741531")
 }
