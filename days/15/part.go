@@ -56,23 +56,24 @@ func (c *Cave) StartMark() {
 	for y := 0; y < len(c.fields); y++ {
 		c.markedFields[y] = make([]int, len(c.fields[y]))
 	}
-	c.Mark(Point{0, 0}, 0)
+	c.Mark(Point{0, 0}, 1, 0)
+	c.fields = c.markedFields
 }
 
-func (c *Cave) Mark(start Point, score int) {
+func (c *Cave) Mark(start Point, direction, score int) {
 	if !start.WithinBounds(c.bounds) || c.visited[start.y][start.x] {
 		return
 	}
 
 	// mark as visited to avoid double summing
-	c.visited[start.y][start.x] = true
-
-	// add current score to field
-	c.markedFields[start.y][start.x] = c.fields[start.y][start.x] + score
+	//c.visited[start.y][start.x] = true
+	if !c.visited[start.y][start.x] || c.fields[start.y][start.x]+score < c.markedFields[start.y][start.x] {
+		c.markedFields[start.y][start.x] = c.fields[start.y][start.x] + score
+	}
 
 	// mark adjacent fields only in pos. directions (don't do diagonals)
-	c.Mark(Point{start.x + 1, start.y}, c.markedFields[start.y][start.x])
-	c.Mark(Point{start.x, start.y + 1}, c.markedFields[start.y][start.x])
+	c.Mark(Point{start.x + direction, start.y}, direction, c.markedFields[start.y][start.x])
+	c.Mark(Point{start.x, start.y + direction}, direction, c.markedFields[start.y][start.x])
 }
 
 func (c *Cave) StartSearch() int {
@@ -136,7 +137,18 @@ func (c Cave) DumpPath(points []Point) {
 		pointMap[p] = true
 	}
 
-	fmt.Println("---")
+	fmt.Println("--- original ---")
+	for y := 0; y < len(c.fields); y++ {
+		for x := 0; x < len(c.fields[y]); x++ {
+			if _, ok := pointMap[Point{x, y}]; ok {
+				fmt.Printf("\033[32m%2d \033[0m", c.fields[y][x])
+			} else {
+				fmt.Printf("\033[31m%2d \033[0m", c.fields[y][x])
+			}
+		}
+		fmt.Println("")
+	}
+	fmt.Println("--- marked ---")
 	for y := 0; y < len(c.fields); y++ {
 		for x := 0; x < len(c.fields[y]); x++ {
 			if _, ok := pointMap[Point{x, y}]; ok {
