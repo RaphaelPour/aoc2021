@@ -77,16 +77,31 @@ type Cave struct {
 	bounds     Point
 }
 
-func NewCave(input []string) *Cave {
+func NewCave(input []string, expand bool) *Cave {
 	cave := new(Cave)
 	cave.travelCost = make(map[Point]int)
-	cave.bounds = Point{x: len(input[0]), y: len(input)}
-	var err error
-	for y := 0; y < len(input); y++ {
-		for x := 0; x < len(input[y]); x++ {
-			cave.travelCost[Point{x, y}], err = strconv.Atoi(string(input[y][x]))
-			if err != nil {
-				panic(fmt.Sprintf("error converting %s to int", string(input[y][x])))
+
+	offset := 1
+	if expand {
+		offset = 5
+	}
+	cave.bounds = Point{x: len(input[0]) * offset, y: len(input) * offset}
+
+	for offY := 0; offY < offset; offY++ {
+		for offX := 0; offX < offset; offX++ {
+			for y := 0; y < len(input); y++ {
+				for x := 0; x < len(input[y]); x++ {
+					cost, err := strconv.Atoi(string(input[y][x]))
+					if err != nil {
+						panic(fmt.Sprintf("error converting %s to int", string(input[y][x])))
+					}
+					cost += offX + offY
+					if cost > 9 {
+						// add 1, since 0 is not allowed
+						cost = (cost % 10) + 1
+					}
+					cave.travelCost[Point{x + len(input[0])*offX, y + len(input)*offY}] = cost
+				}
 			}
 		}
 	}
@@ -195,13 +210,17 @@ func (c Cave) Dump(path ...Point) {
 }
 
 func part1(input []string) int {
-	c := NewCave(input)
-	cost, _ := c.LowestPathCost()
+	c := NewCave(input, false)
+	cost, path := c.LowestPathCost()
+	c.Dump(path...)
 	return cost
 }
 
-func part2() {
-
+func part2(input []string) int {
+	c := NewCave(input, true)
+	cost, path := c.LowestPathCost()
+	c.Dump(path...)
+	return cost
 }
 
 func main() {
@@ -210,5 +229,5 @@ func main() {
 	fmt.Println(part1(util.LoadString(input)))
 
 	fmt.Println("== [ PART 2 ] ==")
-	part2()
+	fmt.Println(part2(util.LoadString(input)))
 }
