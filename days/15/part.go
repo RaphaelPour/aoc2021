@@ -11,6 +11,10 @@ const (
 	INFINITY = int(^uint(0) >> 1)
 )
 
+var (
+	ORIGIN = Point{0, 0}
+)
+
 type Point struct {
 	x, y int
 }
@@ -24,11 +28,16 @@ func (p Point) WithinBounds(bounds Point) bool {
 }
 
 func (p Point) AreNeighbors(other Point) bool {
-	return (p.x == other.x && util.Abs(p.y-other.y) == 1) ||
+	n := (p.x == other.x && util.Abs(p.y-other.y) == 1) ||
 		(util.Abs(p.x-other.x) == 1 && p.y == other.y)
+	if n {
+		//fmt.Println(p, "and", other, "are neighbors")
+	}
+
+	return n
 }
 
-func (p Point) Neigbors(bounds Point) []Point {
+func (p Point) Neighbors(bounds Point) []Point {
 	n := make([]Point, 0)
 	if p.x+1 < bounds.x {
 		n = append(n, Point{p.x + 1, p.y})
@@ -81,31 +90,40 @@ func NewCave(input []string) *Cave {
 			}
 		}
 	}
+
+	// start node has always a cost of zero
+	cave.travelCost[ORIGIN] = 0
+
 	return cave
 }
 
-func (c *Cave) LowestPathCost() int {
+func (c *Cave) LowestPathCost() (int, Points) {
 	costs := make(map[Point]int)
-	workingNode := Point{x: 0, y: 0}
-	visited := Points{workingNode}
-	previous := make(map[Point]*Point)
 
-	// add start node to previous list having no predecessor
-	previous[workingNode] = nil
+	// current working node
+	workingNode := Point{x: 0, y: 0}
+
+	// stores all working nodes to avoid duplicates
+	visited := map[Point]bool{workingNode: true}
+
+	// stores nodes and their predecessor
+	previous := make(map[Point]Point)
 
 	// set cost of start node to zero, as djikstra and AoC description suggests
 	costs[workingNode] = 0
 
 	// initialize all costs of the start node's neighbors
-	for _, neigh := range workingNode.Neigbors(c.bounds) {
-		costs[neigh] = c.travelCost[neigh]
+	for _, neigh := range workingNode.Neighbors(c.bounds) {
+		costs[neigh] = INFINITY
 	}
-	fmt.Println(costs)
+	//fmt.Println("costs:", costs)
 
 	for len(visited) < c.bounds.Area() {
+		//fmt.Println("------------------")
+		// c.Dump(workingNode)
 		min := INFINITY
-		for node, newCost := range c.travelCost {
-			if visited.contains(node) { // || !workingNode.AreNeighbors(node) {
+		for node, newCost := range costs {
+			if _, ok := visited[node]; ok {
 				// skip already visited
 				continue
 			}
@@ -116,40 +134,57 @@ func (c *Cave) LowestPathCost() int {
 			}
 		}
 
-		visited = append(visited, workingNode)
-		fmt.Printf("New working node %s\n", workingNode)
+		visited[workingNode] = true
+		//fmt.Printf("min[cost]: %s (%d)\n", workingNode, min)
 
 		// update costs
-		for _, neigh := range workingNode.Neigbors(c.bounds) {
-			if visited.contains(neigh) { // || !workingNode.AreNeighbors(node) {
+		for _, neigh := range workingNode.Neighbors(c.bounds) {
+			if _, ok := visited[neigh]; ok {
 				// skip already visited
 				continue
 			}
 			cost := costs[workingNode] + c.travelCost[neigh]
-			if cost < costs[neigh] {
+			if _, ok := costs[neigh]; !ok || cost < costs[neigh] {
 				costs[neigh] = cost
-				previous[neigh] = &workingNode
+				previous[neigh] = workingNode
 			}
 
 		}
+		//fmt.Println("costs:", costs)
+		//fmt.Println("previous:", previous)
 	}
 
-	fmt.Println(previous)
-	c.Dump(previous)
+	//fmt.Println("previous:", previous)
 
 	totalCost := 0
-	for n := &workingNode; n != nil; n = previous[*n] {
-		fmt.Printf("cost(%s) = %d\n", *n, c.travelCost[*n])
-		totalCost += c.travelCost[*n]
+	goal := Point{c.bounds.x - 1, c.bounds.y - 1}
+	path := make(Points, 0)
+	for n := goal; n != ORIGIN; n = previous[n] {
+		//fmt.Printf("cost(%s) = %d\n", n, c.travelCost[n])
+		totalCost += c.travelCost[n]
+		path = append(path, n)
 	}
-	return totalCost
+
+	// reverse list
+	path = append(path, ORIGIN)
+	for i := 0; i < int(len(path)/2); i++ {
+		path[i], path[len(path)-i-1] = path[len(path)-i-1], path[i]
+	}
+
+	// c.Dump(path...)
+
+	return totalCost, path
 }
 
-func (c Cave) Dump(path map[Point]*Point) {
+func (c Cave) Dump(path ...Point) {
+	pointMap := make(map[Point]bool)
+	for _, p := range path {
+		pointMap[p] = true
+	}
 	for y := 0; y < c.bounds.y; y++ {
 		for x := 0; x < c.bounds.x; x++ {
 			p := Point{x, y}
-			if _, ok := path[p]; ok {
+			if _, ok := pointMap[p]; ok {
 				fmt.Printf("\033[32m%d \033[0m", c.travelCost[p])
 			} else {
 				fmt.Printf("\033[31m%d \033[0m", c.travelCost[p])
@@ -161,7 +196,8 @@ func (c Cave) Dump(path map[Point]*Point) {
 
 func part1(input []string) int {
 	c := NewCave(input)
-	return c.LowestPathCost()
+	cost, _ := c.LowestPathCost()
+	return cost
 }
 
 func part2() {
@@ -169,7 +205,7 @@ func part2() {
 }
 
 func main() {
-	input := "input_example"
+	input := "input"
 	fmt.Println("== [ PART 1 ] ==")
 	fmt.Println(part1(util.LoadString(input)))
 
