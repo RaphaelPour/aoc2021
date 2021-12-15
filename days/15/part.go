@@ -19,11 +19,13 @@ func (p Point) WithinBounds(bounds Point) bool {
 	return p.x >= 0 && p.x < bounds.x && p.y >= 0 && p.y < bounds.y
 }
 
+func (p Point) Area() int {
+	return p.x * p.y
+}
+
 type Cave struct {
-	fields       [][]int
-	markedFields [][]int
-	bounds       Point
-	visited      [][]bool
+	metrics [][]int
+	bounds  Point
 }
 
 func NewCave(input []string) *Cave {
@@ -43,129 +45,30 @@ func NewCave(input []string) *Cave {
 	return cave
 }
 
-func (c *Cave) resetVisited() {
-	c.visited = make([][]bool, len(c.fields))
-	for y := 0; y < len(c.fields); y++ {
-		c.visited[y] = make([]bool, len(c.fields[y]))
-	}
-}
-
-func (c *Cave) StartMark() {
-	c.resetVisited()
-	c.markedFields = make([][]int, len(c.fields))
-	for y := 0; y < len(c.fields); y++ {
-		c.markedFields[y] = make([]int, len(c.fields[y]))
-	}
-	c.Mark(Point{0, 0}, 1, 0)
-	c.fields = c.markedFields
-}
-
-func (c *Cave) Mark(start Point, direction, score int) {
-	if !start.WithinBounds(c.bounds) || c.visited[start.y][start.x] {
-		return
-	}
-
-	// mark as visited to avoid double summing
-	//c.visited[start.y][start.x] = true
-	if !c.visited[start.y][start.x] || c.fields[start.y][start.x]+score < c.markedFields[start.y][start.x] {
-		c.markedFields[start.y][start.x] = c.fields[start.y][start.x] + score
-	}
-
-	// mark adjacent fields only in pos. directions (don't do diagonals)
-	c.Mark(Point{start.x + direction, start.y}, direction, c.markedFields[start.y][start.x])
-	c.Mark(Point{start.x, start.y + direction}, direction, c.markedFields[start.y][start.x])
-}
-
-func (c *Cave) StartSearch() int {
-	c.resetVisited()
-	score, path := c.Search(Point{0, 0}, Point{c.bounds.x - 1, c.bounds.y - 1})
-	c.DumpPath(path)
-	return score
-}
-
-func (c *Cave) Search(current, goal Point) (int, []Point) {
-	if current == goal {
-		return c.fields[current.y][current.x], []Point{current}
-	}
-
-	if !current.WithinBounds(c.bounds) {
-		return 0, nil
-	}
-
-	currentScore := c.fields[current.y][current.x]
-
-	right := Point{current.x + 1, current.y}
-	down := Point{current.x, current.y + 1}
-
-	// This should never happen
-	if !down.WithinBounds(c.bounds) && !right.WithinBounds(c.bounds) {
-		return 0, nil
-		// panic(fmt.Sprintf("Down and right are out-of-bounds from pos. %s. Shouldn't this be the goal %s?", current, goal))
-	}
-
-	// if one of both neighbors is out-of-bounds, use the other
-	var visited []Point
-	var neighborScore int
-	if !down.WithinBounds(c.bounds) {
-		neighborScore, visited = c.Search(right, goal)
-	} else if !right.WithinBounds(c.bounds) {
-		neighborScore, visited = c.Search(down, goal)
-	} else if c.markedFields[right.y][right.x] < c.markedFields[down.y][down.x] {
-		// choose the neighbor with the lowest score, it's okay to be greedy
-		// since we summed up everything from the start to the goal so this
-		// should work
-		neighborScore, visited = c.Search(right, goal)
-	} else {
-		neighborScore, visited = c.Search(down, goal)
-	}
-
-	return currentScore + neighborScore, append(visited, current)
-}
-
-func (c Cave) Dump() {
-	for y := 0; y < len(c.fields); y++ {
-		for x := 0; x < len(c.fields[y]); x++ {
-			fmt.Printf("%2d ", c.markedFields[y][x])
+func (c *Cave) LowestPathCost() int {
+	costs := make(map[Point]int)
+	workingNode := Point{x: 0, y: 0}
+	nodes := []Point{workingNode}
+	for _, node := range nodes {
+		// TODO: Implement AreNeighbors
+		if workingNode.AreNeighbors(workingNode) {
+			costs[node] = c.metrics[node.y][node.x]
 		}
-		fmt.Println("")
-	}
-}
-
-func (c Cave) DumpPath(points []Point) {
-	pointMap := make(map[Point]bool)
-	for _, p := range points {
-		pointMap[p] = true
 	}
 
-	fmt.Println("--- original ---")
-	for y := 0; y < len(c.fields); y++ {
-		for x := 0; x < len(c.fields[y]); x++ {
-			if _, ok := pointMap[Point{x, y}]; ok {
-				fmt.Printf("\033[32m%2d \033[0m", c.fields[y][x])
-			} else {
-				fmt.Printf("\033[31m%2d \033[0m", c.fields[y][x])
+	for len(nodes) < c.bounds.Area() {
+		min := 1000000
+		var newNode Point
+		for y := range c.metrics {
+			for x := range c.metrics[y] {
+				// TODO: check if Point{x,y} is in nodes and continue if so
 			}
 		}
-		fmt.Println("")
-	}
-	fmt.Println("--- marked ---")
-	for y := 0; y < len(c.fields); y++ {
-		for x := 0; x < len(c.fields[y]); x++ {
-			if _, ok := pointMap[Point{x, y}]; ok {
-				fmt.Printf("\033[32m%2d \033[0m", c.markedFields[y][x])
-			} else {
-				fmt.Printf("\033[31m%2d \033[0m", c.markedFields[y][x])
-			}
-		}
-		fmt.Println("")
 	}
 }
 
 func part1(input []string) int {
 	c := NewCave(input)
-	c.StartMark()
-	c.Dump()
-
 	return c.StartSearch()
 }
 
