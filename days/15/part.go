@@ -7,6 +7,10 @@ import (
 	"github.com/RaphaelPour/aoc2021/util"
 )
 
+const (
+	INFINITY = int(^uint(0) >> 1)
+)
+
 type Point struct {
 	x, y int
 }
@@ -83,39 +87,44 @@ func NewCave(input []string) *Cave {
 func (c *Cave) LowestPathCost() int {
 	costs := make(map[Point]int)
 	workingNode := Point{x: 0, y: 0}
-	nodes := Points{workingNode}
+	visited := Points{workingNode}
 	previous := make(map[Point]*Point)
+
+	// add start node to previous list having no predecessor
 	previous[workingNode] = nil
+
+	// set cost of start node to zero, as djikstra and AoC description suggests
 	costs[workingNode] = 0
 
+	// initialize all costs of the start node's neighbors
 	for _, neigh := range workingNode.Neigbors(c.bounds) {
 		costs[neigh] = c.travelCost[neigh]
 	}
 	fmt.Println(costs)
 
-	for len(nodes) < c.bounds.Area() {
-		min := 1000000
+	for len(visited) < c.bounds.Area() {
+		min := INFINITY
 		for node, newCost := range c.travelCost {
-			if nodes.contains(node) || !workingNode.AreNeighbors(node) {
-				// skip already visited nodes
+			if visited.contains(node) { // || !workingNode.AreNeighbors(node) {
+				// skip already visited
 				continue
 			}
 
-			fmt.Printf(
-				"found %s with cost %d (current min: %d)\n",
-				node, newCost, min,
-			)
 			if newCost < min {
 				min = newCost
 				workingNode = node
 			}
 		}
 
-		nodes = append(nodes, workingNode)
+		visited = append(visited, workingNode)
 		fmt.Printf("New working node %s\n", workingNode)
 
 		// update costs
 		for _, neigh := range workingNode.Neigbors(c.bounds) {
+			if visited.contains(neigh) { // || !workingNode.AreNeighbors(node) {
+				// skip already visited
+				continue
+			}
 			cost := costs[workingNode] + c.travelCost[neigh]
 			if cost < costs[neigh] {
 				costs[neigh] = cost
@@ -127,9 +136,11 @@ func (c *Cave) LowestPathCost() int {
 
 	fmt.Println(previous)
 	c.Dump(previous)
+
 	totalCost := 0
-	for _, node := range nodes {
-		totalCost += costs[node]
+	for n := &workingNode; n != nil; n = previous[*n] {
+		fmt.Printf("cost(%s) = %d\n", *n, c.travelCost[*n])
+		totalCost += c.travelCost[*n]
 	}
 	return totalCost
 }
@@ -139,9 +150,9 @@ func (c Cave) Dump(path map[Point]*Point) {
 		for x := 0; x < c.bounds.x; x++ {
 			p := Point{x, y}
 			if _, ok := path[p]; ok {
-				fmt.Printf("\033[32m%2d \033[0m", c.travelCost[p])
+				fmt.Printf("\033[32m%d \033[0m", c.travelCost[p])
 			} else {
-				fmt.Printf("\033[31m%2d \033[0m", c.travelCost[p])
+				fmt.Printf("\033[31m%d \033[0m", c.travelCost[p])
 			}
 		}
 		fmt.Println("")
