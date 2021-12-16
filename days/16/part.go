@@ -8,8 +8,16 @@ import (
 )
 
 const (
-	LITERAL_PACKET  = 4
-	OPERATOR_PACKET = 6
+	INFINITY = int(^uint(0) >> 1)
+
+	SUM_PACKET     = 0
+	PRODUCT_PACKET = 1
+	MINIMUM_PACKET = 2
+	MAXIMUM_PACKET = 3
+	LITERAL_PACKET = 4
+	GREATER_PACKET = 5
+	LESSER_PACKET  = 6
+	EQUAL_PACKET   = 7
 )
 
 type Decoder struct {
@@ -56,26 +64,28 @@ func (d *Decoder) EOF() bool {
 	return d.index >= len(d.input)
 }
 
-func (d *Decoder) ParseOperator() {
+func (d *Decoder) ParseOperator() []int {
 	// handle operator packet
 	lengthTypeID := d.Read(1) == 1
 	fmt.Printf("%02d I %#v +1\n", d.index-1, lengthTypeID)
 
+	values := make([]int, 0)
 	if lengthTypeID {
 		subPacketCount := d.Read(11)
 		fmt.Printf("%02d L %04b (%d) +11\n", d.index-11, subPacketCount, subPacketCount)
 		for i := 0; i < subPacketCount; i++ {
-			d.Parse()
+			values = append(values, d.Parse())
 		}
-		return
+		return values
 	}
 
 	length := d.Read(15)
 	fmt.Printf("%02d L %04b (%d) +15\n", d.index-15, length, length)
 	start := d.index
 	for d.index < start+length {
-		d.Parse()
+		values = append(values, d.Parse())
 	}
+	return values
 }
 
 func (d *Decoder) ParseHeader() (int, int) {
@@ -89,7 +99,7 @@ func (d *Decoder) ParseHeader() (int, int) {
 	return packetVersion, packetType
 }
 
-func (d *Decoder) ParseLiteral() {
+func (d *Decoder) ParseLiteral() int {
 	// read until last group has been reached indicated by the
 	// most significant bit
 	r := 'A'
@@ -108,19 +118,68 @@ func (d *Decoder) ParseLiteral() {
 	}
 
 	fmt.Printf("result: %b (%d)\n", result, result)
+	return result
 }
 
-func (d *Decoder) StartParse() {
-	d.Parse()
+func (d *Decoder) StartParse() int {
+	return d.Parse()
 }
 
 func (d *Decoder) Parse() int {
 	_, packetType := d.ParseHeader()
 	if packetType == LITERAL_PACKET {
-		d.ParseLiteral()
-	} else {
-		d.ParseOperator()
+		return d.ParseLiteral()
 	}
+
+	values := d.ParseOperator()
+	result := 0
+	switch packetType {
+	case SUM_PACKET:
+		for _, v := range values {
+			result += v
+		}
+		fmt.Printf("sum(%#v) = %d\n", values, result)
+	case PRODUCT_PACKET:
+		result = 1
+		for _, v := range values {
+			result *= v
+		}
+		fmt.Printf("prod(%#v) = %d\n", values, result)
+	case MINIMUM_PACKET:
+		result = INFINITY
+		for _, v := range values {
+			if v < result {
+				result = v
+			}
+		}
+		fmt.Printf("min(%#v) = %d\n", values, result)
+	case MAXIMUM_PACKET:
+		for _, v := range values {
+			if v > result {
+				result = v
+			}
+		}
+		fmt.Printf("max(%#v) = %d\n", values, result)
+	case GREATER_PACKET:
+		a, b := values[0], values[1]
+		if a > b {
+			result = 1
+		}
+		fmt.Printf("%d > %d = %d\n", a, b, result)
+	case LESSER_PACKET:
+		a, b := values[0], values[1]
+		if a < b {
+			result = 1
+		}
+		fmt.Printf("%d < %d = %d\n", a, b, result)
+	case EQUAL_PACKET:
+		a, b := values[0], values[1]
+		if a == b {
+			result = 1
+		}
+		fmt.Printf("%d == %d = %d\n", a, b, result)
+	}
+	return result
 }
 
 func part1(input string) int {
@@ -130,15 +189,16 @@ func part1(input string) int {
 }
 
 func part2(input string) int {
-	return 0
+	d := NewDecoder(input)
+	return d.Parse()
 }
 
 func main() {
-	input := "input_example"
+	input := "input"
 	fmt.Println("== [ PART 1 ] ==")
 	fmt.Println(part1(util.LoadString(input)[0]))
-	fmt.Println("too low: 755")
 
 	fmt.Println("== [ PART 2 ] ==")
 	fmt.Println(part2(util.LoadString(input)[0]))
+	fmt.Println("too low: 58056359978")
 }
