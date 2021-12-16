@@ -108,14 +108,13 @@ func (d *Decoder) ParseLiteral() {
 	}
 
 	fmt.Printf("result: %b (%d)\n", result, result)
-
 }
 
 func (d *Decoder) StartParse() {
 	d.Parse()
 }
 
-func (d *Decoder) Parse() {
+func (d *Decoder) Parse() int {
 	_, packetType := d.ParseHeader()
 	if packetType == LITERAL_PACKET {
 		d.ParseLiteral()
