@@ -33,7 +33,7 @@ func NewDecoder(input string) *Decoder {
 
 func (d *Decoder) Read(bits int) int {
 	if bits == 0 {
-		return 0
+		return -1
 	}
 	if len(d.input) < d.index+bits {
 		panic(fmt.Sprintf(
@@ -49,7 +49,6 @@ func (d *Decoder) Read(bits int) int {
 	if err != nil {
 		panic(fmt.Sprintf("error converting %s from bin to dec", string(s)))
 	}
-	fmt.Println("read", num, "(", bits, ") now at", d.index)
 	return int(num)
 }
 
@@ -58,64 +57,62 @@ func (d *Decoder) EOF() bool {
 }
 
 func (d *Decoder) ParseOperator() {
-	fmt.Println("parse operator")
 	// handle operator packet
-	fmt.Println("read 1 byte: length type id")
 	lengthTypeID := d.Read(1) == 1
+	fmt.Printf("%02d I %#v +1\n", d.index-1, lengthTypeID)
 
 	if lengthTypeID {
-		fmt.Println("read 11 bytes: sub packet count")
 		subPacketCount := d.Read(11)
+		fmt.Printf("%02d L %04b (%d) +11\n", d.index-11, subPacketCount, subPacketCount)
 		for i := 0; i < subPacketCount; i++ {
 			d.Parse()
 		}
 		return
 	}
 
-	fmt.Println("read 15 bytes: sub packet length")
 	length := d.Read(15)
+	fmt.Printf("%02d L %04b (%d) +15\n", d.index-15, length, length)
 	start := d.index
-	fmt.Println("sub package: expect length", length, "until", start+length, "is reached")
-	for start+length <= d.index {
+	for d.index < start+length {
 		d.Parse()
 	}
 }
 
 func (d *Decoder) ParseHeader() (int, int) {
-	fmt.Println("read version")
 	packetVersion := d.Read(3)
-	fmt.Println("read type")
+	fmt.Printf("%02d V %03b (%d) +3\n", d.index-3, packetVersion, packetVersion)
+
 	packetType := d.Read(3)
+	fmt.Printf("%02d T %03b (%d) +3\n", d.index-3, packetType, packetType)
+
 	d.versionSum += packetVersion
-	fmt.Println("header", packetVersion, packetType)
 	return packetVersion, packetType
 }
 
 func (d *Decoder) ParseLiteral() {
-	fmt.Println("parse literal")
-
 	// read until last group has been reached indicated by the
 	// most significant bit
-	readBits := 0
+	r := 'A'
+	result := 0
 	for {
-		fmt.Println("read 5 bytes: literal value")
-		value := d.Read(5)
-		if value&0x10 == 0 {
-			fmt.Println("msb set: leaving literal value")
+		last := d.Read(1) == 0
+		fmt.Printf("%02d %c %#v +1\n", d.index-1, r, last)
+
+		value := d.Read(4)
+		result = (result << 4) | value
+		fmt.Printf("%02d %c %05b (%d) +4\n", d.index-4, r, value, value)
+		if last {
 			break
 		}
-		readBits += 5
+		r++
 	}
 
-	// align input to 4 bits by reading the remaining padding
-	fmt.Println("read", 4-(d.index%4), " bytes: padding of literal value")
-	d.Read(4 - (d.index % 4))
+	fmt.Printf("result: %b (%d)\n", result, result)
+
 }
 
 func (d *Decoder) StartParse() {
-	for !d.EOF() {
-		d.Parse()
-	}
+	d.Parse()
 }
 
 func (d *Decoder) Parse() {
@@ -141,6 +138,7 @@ func main() {
 	input := "input_example"
 	fmt.Println("== [ PART 1 ] ==")
 	fmt.Println(part1(util.LoadString(input)[0]))
+	fmt.Println("too low: 755")
 
 	fmt.Println("== [ PART 2 ] ==")
 	fmt.Println(part2(util.LoadString(input)[0]))
