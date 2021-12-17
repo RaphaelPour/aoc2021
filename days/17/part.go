@@ -8,49 +8,62 @@ import (
 	"github.com/RaphaelPour/aoc2021/util"
 )
 
-type Point struct {
+type Vector struct {
 	x, y int
 }
 
-func (p Point) String() string {
-	return fmt.Sprintf("%d|%d", p.x, p.y)
+func (v *Vector) Add(other Vector) {
+	v.x += other.x
+	v.y += other.y
+}
+
+func (v Vector) String() string {
+	return fmt.Sprintf("(%d %d)", v.x, v.y)
 }
 
 type Rectangle struct {
-	p1, p2 Point
+	v1, v2 Vector
 }
 
 func (r Rectangle) String() string {
-	return fmt.Sprintf("%s -> %s", r.p1, r.p2)
+	return fmt.Sprintf("%s -> %s", r.v1, r.v2)
 }
 
-type Parabola struct {
-	a0, a1, a2 float64
+func (r Rectangle) Contains(v Vector) bool {
+	return v.x >= r.v1.x && v.x <= r.v2.x &&
+		v.y >= r.v1.y && v.y <= r.v2.y
 }
 
-func (p Parabola) String() string {
-	return fmt.Sprintf("%.4fx^2 + %.4fx + %.4f", p.a2, p.a1, p.a0)
+func (r Rectangle) Reachable(v Vector) bool {
+	return v.y >= r.v1.y
 }
 
-func (p Parabola) Eval(x float64) float64 {
-	return p.a2*x*x + p.a1*x + p.a0
-}
+func trickshot(velocity, start Vector, target Rectangle) (int, bool) {
+	peak := 0
 
-func (p Parabola) Vertex() Point {
-	x := -p.a1 / (2 * p.a0)
-	y := p.Eval(x)
-	return Point{int(x), int(y)}
-}
-
-func (p Parabola) IntersectsWith(area Rectangle) bool {
-	y := area.p1.y
-
-	for x := area.p1.x; x <= area.p2.x; x++ {
-		if int(p.Eval(float64(x))) >= y {
-			return true
+	// check if target is not reachable anymore
+	for target.Reachable(start) {
+		// fmt.Println(start, velocity)
+		// check if at target
+		if target.Contains(start) {
+			return peak, true
 		}
+
+		start.Add(velocity)
+		peak = util.Max(peak, start.y)
+
+		// apply drag
+		if velocity.x > 0 {
+			velocity.x--
+		} else if velocity.x < 0 {
+			velocity.x++
+		}
+
+		// apply gravity
+		velocity.y--
 	}
-	return false
+
+	return peak, false
 }
 
 func part1(input string) int {
@@ -77,26 +90,26 @@ func part1(input string) int {
 		panic(fmt.Sprintf("error converting %s", match))
 	}
 
-	targetArea := Rectangle{
-		p1: Point{x1, y1},
-		p2: Point{x2, y2},
+	target := Rectangle{
+		v1: Vector{x1, y1},
+		v2: Vector{x2, y2},
 	}
 
-	start := Point{x: 0, y: 0}
-
-	fmt.Println(targetArea)
-	fmt.Println(start)
-
-	p := Parabola{a2: -1, a1: float64(x1), a0: float64(y1)}
-
-	for p.IntersectsWith(targetArea) || p.a2 < 0 {
-		p.a2 += 0.1
-		fmt.Println(p)
-		fmt.Println(p.Vertex())
+	maxPeak := 0
+	velocities := 0
+	for y := -1000; y <= 1000; y++ {
+		for x := -1000; x <= 1000; x++ {
+			if peak, ok := trickshot(Vector{x, y}, Vector{0, 0}, target); ok {
+				velocities++
+				if peak > maxPeak {
+					maxPeak = peak
+				}
+			}
+		}
 	}
-	fmt.Println(p.Vertex())
 
-	return 0
+	fmt.Println("velocities:", velocities)
+	return maxPeak
 }
 
 func part2() {
@@ -104,9 +117,10 @@ func part2() {
 }
 
 func main() {
-	input := "input_example"
+	input := "input"
 	fmt.Println("== [ PART 1 ] ==")
 	fmt.Println(part1(util.LoadString(input)[0]))
+	fmt.Println("too low: 5050")
 
 	fmt.Println("== [ PART 2 ] ==")
 	part2()
