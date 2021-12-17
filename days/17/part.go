@@ -38,35 +38,13 @@ func (r Rectangle) Reachable(v Vector) bool {
 	return v.y >= r.v1.y
 }
 
-func trickshot(velocity, start Vector, target Rectangle) (int, bool) {
-	peak := 0
-
-	// check if target is not reachable anymore
-	for target.Reachable(start) {
-		// fmt.Println(start, velocity)
-		// check if at target
-		if target.Contains(start) {
-			return peak, true
-		}
-
-		start.Add(velocity)
-		peak = util.Max(peak, start.y)
-
-		// apply drag
-		if velocity.x > 0 {
-			velocity.x--
-		} else if velocity.x < 0 {
-			velocity.x++
-		}
-
-		// apply gravity
-		velocity.y--
-	}
-
-	return peak, false
+type Launcher struct {
+	target Rectangle
 }
 
-func part1(input string) int {
+func NewLauncher(input string) *Launcher {
+	p := new(Launcher)
+
 	pattern := regexp.MustCompile(`^target area: x=(-?\d+)..(-?\d+), y=(-?\d+)..(-?\d+)$`)
 	match := pattern.FindStringSubmatch(input)
 	if len(match) != 5 {
@@ -90,16 +68,20 @@ func part1(input string) int {
 		panic(fmt.Sprintf("error converting %s", match))
 	}
 
-	target := Rectangle{
+	p.target = Rectangle{
 		v1: Vector{x1, y1},
 		v2: Vector{x2, y2},
 	}
 
+	return p
+}
+
+func (p *Launcher) probe() (int, int) {
 	maxPeak := 0
 	velocities := 0
-	for y := -1000; y <= 1000; y++ {
-		for x := -1000; x <= 1000; x++ {
-			if peak, ok := trickshot(Vector{x, y}, Vector{0, 0}, target); ok {
+	for y := p.target.v1.y; y <= 1000; y++ {
+		for x := 1; x <= p.target.v2.x; x++ {
+			if peak, ok := p.shoot(Vector{x, y}); ok {
 				velocities++
 				if peak > maxPeak {
 					maxPeak = peak
@@ -107,21 +89,52 @@ func part1(input string) int {
 			}
 		}
 	}
+	return maxPeak, velocities
+}
 
-	fmt.Println("velocities:", velocities)
+func (p *Launcher) shoot(velocity Vector) (int, bool) {
+	peak := 0
+	start := Vector{0, 0}
+
+	// check if target is not reachable anymore
+	for p.target.Reachable(start) {
+		// check if at target
+		if p.target.Contains(start) {
+			return peak, true
+		}
+
+		start.Add(velocity)
+		peak = util.Max(peak, start.y)
+
+		// apply drag
+		if velocity.x > 0 {
+			velocity.x--
+		} else if velocity.x < 0 {
+			velocity.x++
+		}
+
+		// apply gravity
+		velocity.y--
+	}
+
+	return peak, false
+}
+
+func part1(input string) int {
+	maxPeak, _ := NewLauncher(input).probe()
 	return maxPeak
 }
 
-func part2() {
-
+func part2(input string) int {
+	_, velocities := NewLauncher(input).probe()
+	return velocities
 }
 
 func main() {
 	input := "input"
 	fmt.Println("== [ PART 1 ] ==")
 	fmt.Println(part1(util.LoadString(input)[0]))
-	fmt.Println("too low: 5050")
 
 	fmt.Println("== [ PART 2 ] ==")
-	part2()
+	fmt.Println(part2(util.LoadString(input)[0]))
 }
