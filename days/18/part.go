@@ -18,54 +18,90 @@ type SnailfishNumber struct {
 }
 
 type Node struct {
-	left, right    *Node
-	next, previous *Node
-	literal        bool
-	number         int
+	left, right, parent *Node
+	literal             bool
+	number              int
 }
 
 func (n *Node) Reset() {
 	n.left = nil
 	n.right = nil
+	n.parent = nil
+	n.parent = nil
 	n.literal = true
 	n.number = 0
 }
 
-func (n *Node) Split() {
+func (n Node) LeftLiteral() {
+	// TODO: find next left literal
+	//       return nil if ther eis none
 
 }
+func (n Node) RightLiteral() {
+	// TODO: find next right literal
+	//       return nil if ther eis none
+}
 
-func (n *Node) Explode(depth int) {
+func (n *Node) Split() bool {
+	if n.literal && n.number >= 10 {
+		// create left child, with literal floored half
+		left := new(Node)
+		left.literal = true
+		left.number = n.number / 2
+
+		// create right child, with literal ceiled half
+		right := new(Node)
+		right.literal = true
+		right.number = (n.number / 2) + (n.number % 2)
+
+		// adopt child
+		n.literal = false
+		n.number = 0
+		n.left = left
+		n.right = right
+		n.parent = n
+
+		return true
+	}
+
+	// if node is literal and not grater 10, return
+	if n.literal {
+		return false
+	}
+
+	if !n.left.literal && n.left.Split() {
+		return true
+	}
+
+	if !n.right.literal && n.right.Split() {
+		return true
+	}
+
+	return false
+}
+
+func (n *Node) Explode(depth int) bool {
+	// if node is literal we can't do much since the explode
+	// itself is always done by the literal's parent
+	if n.literal {
+		return false
+	}
+
 	if depth >= 4 && n.left.literal && n.right.literal {
-
-		previous := n.previous
-		for !(previous == nil || previous.literal) {
-			previous = previous.previous
-		}
-		if previous != nil {
-			n.previous.number += n.left.number
-		}
-
-		next := n.next
-		for !(next == nil || next.literal) {
-			next = next.next
-		}
-		if n.next != nil {
-			n.next.number += n.right.number
-		}
-
+		// TODO: find left and right literals via parent
 		n.Reset()
-
-		return
+		return true
 	}
 
-	if !n.left.literal {
-		n.left.Explode(depth + 1)
+	if !n.left.literal && n.left.Explode(depth+1) {
+		return true
 	}
 
-	if !n.right.literal {
-		n.right.Explode(depth + 1)
+	if !n.right.literal && n.right.Explode(depth+1) {
+		return true
 	}
+
+	return false
 }
 
 func (n Node) String() string {
@@ -158,11 +194,10 @@ func (s *SnailfishNumber) parse(node *Node) {
 	 */
 
 	left := new(Node)
+	left.parent = node
+
 	right := new(Node)
-	left.previous = node
-	left.next = right
-	right.previous = left
-	right.next = node
+	right.parent = node
 
 	node.left = left
 	node.right = right
@@ -185,19 +220,34 @@ func (s *SnailfishNumber) Add(other SnailfishNumber) {
 	newRoot.left = s.root
 	newRoot.right = other.root
 
-	newRoot.left.next = newRoot.right
-	newRoot.right.previous = newRoot.left
-
 	s.root = newRoot
 
-	s.root.Explode(1)
+	fmt.Printf("after addition: %s\n", s.root)
+	// reduce until numbers stay the same
+	for {
+		// explode everything before continuing
+		for {
+			if !s.root.Explode(0) {
+				break
+			}
+			fmt.Printf("after explode:  %s\n", s.root)
+		}
+		// split
+		if !s.root.Split() {
+			break
+		}
+		fmt.Printf("after split:    %s\n", s.root)
+	}
 }
 
 func part1(input []string) int {
-	s := SnailfishNumber{input: input[0]}
-	s.root = new(Node)
-	s.parse(s.root)
-	fmt.Println(s.root)
+	s := NewSnailfishNumbers(input)
+	sum := s[0]
+	fmt.Printf("befire:         %s\n", sum)
+	for _, num := range s[1:] {
+		sum.Add(num)
+		fmt.Println(sum)
+	}
 	return 0
 }
 
@@ -391,7 +441,7 @@ func main() {
 		return
 	}
 
-	input := "input_example"
+	input := "input_example3"
 	fmt.Println("== [ PART 1 ] ==")
 	fmt.Println(part1(util.LoadString(input)))
 
