@@ -23,118 +23,120 @@ type Node struct {
 	number              int
 }
 
-func (n *Node) Reset() {
-	n.left = nil
-	n.right = nil
-	n.parent = nil
-	n.literal = true
-	n.number = 0
-}
-
 func (n *Node) LeftLiteral() (*Node, bool) {
-	// TODO: Check if final left literal node is
-	//       actually one of the caller pair.
-	iterator := n
-
-	// if literal, go one up since a pair consists of two nodes rather
-	// than one with two numbers.
-	if n.literal {
-		iterator = n.parent
+	if !n.literal {
+		panic("can not search literal neighbor for non-literal start node")
 	}
 
-	// go up until left is different to where we came from.
-	// if literal is already very left, this loop will go
-	// until root has been reached
-	for iterator.parent != nil && iterator.parent.left == iterator {
-		iterator = iterator.parent
+	if n.parent == nil {
+		panic(fmt.Sprintf("node %s has no parents: %#v\n", n, n))
 	}
 
-	// early return if root has been reached (iterator is nil)
-	if iterator.parent == nil {
+	if !n.parent.left.literal || !n.parent.right.literal {
+		panic("can only find neighbors for plain literal pairs")
+	}
+
+	// go one parent up to get the "pair"-node
+	// go another parent up to get the first node that could have our
+	// neighbor literal
+	lastNode := n.parent
+	node := n.parent.parent
+
+	if n.parent.parent == nil {
+		// the start literal /paar seems to be the only pair.
+		fmt.Printf("start literal %s is alone\n", n)
 		return nil, false
 	}
 
-	iterator = iterator.parent.left
+	// go up until first grand*parent node has been reached where our
+	// start literal is not at the desiered side
+	for {
+		if node.left != lastNode {
+			// we found a promisingly grand*node
+			node = node.left
+			break
+		}
 
-	// the iterator still remains our literal node. In this case
-	// the caller is the left most.
-	if iterator == n {
-		return nil, false
+		if node.parent == nil {
+			// we reached the root node and the prior condition having
+			// a new child on the desired side didn't match.
+			// This means our start literal is already the most outer one.
+			return nil, false
+		}
+
+		lastNode = node
+		node = node.parent
 	}
 
-	// otherwise we have reached the (grand*)parent node that has a  non-nil left
-	// side. Go to the right most node, which is the left neighbor of the caller
-	// node.
-	for !iterator.literal {
-		iterator = iterator.right
+	// go down opposite side until literal has been reached
+	// this is the left neighbor of our start literal
+	for !node.literal {
+		node = node.right
 	}
 
-	// check if literal is actually belonging to the callee, return nil in this
-	// case since the neighbor needs to be from another pair
-	if iterator == n.left || iterator == n.right {
-		return nil, false
-	}
-
-	// GOTCHA!
-	return iterator, true
+	return node, true
 }
 
 func (n *Node) RightLiteral() (*Node, bool) {
-	// 1. go up until previous node is not the right of the current one
-	// 2. go down left most until literal
-
-	iterator := n
-	// if literal, go one up since a pair consists of two nodes rather
-	// than one with two numbers.
-	if n.literal {
-		iterator = n.parent
+	if !n.literal {
+		panic("can not search literal neighbor for non-literal start node")
 	}
 
-	// go up until right is different to where we came from.
-	// if literal is already very right, this loop will go
-	// until root has been reached
-	for iterator.parent != nil && iterator.parent.right == iterator {
-		iterator = iterator.parent
+	if n.parent == nil {
+		panic(fmt.Sprintf("node %s has no parents: %#v\n", n, n))
 	}
-	// early return if root has been reached (iterator is nil)
-	if iterator.parent == nil {
+
+	// go one parent up to get the "pair"-node
+	// go another parent up to get the first node that could have our
+	// neighbor literal
+	lastNode := n.parent
+	node := n.parent.parent
+
+	if n.parent.parent == nil {
+		// the start literal /paar seems to be the only pair.
+		fmt.Printf("start literal %s is alone\n", n)
 		return nil, false
 	}
 
-	iterator = iterator.parent.right
+	// go up until first grand*parent node has been reached where our
+	// start literal is not at the desiered side
+	for {
+		if node.right != lastNode {
+			// we found a promisingly grand*node
+			node = node.right
+			break
+		}
 
-	// the iterator still remains our literal node. In this case
-	// the caller is the right most.
-	if iterator == n {
-		return nil, false
+		if node.parent == nil {
+			// we reached the root node and the prior condition having
+			// a new child on the desired side didn't match.
+			// This means our start literal is already the most outer one.
+			return nil, false
+		}
+
+		lastNode = node
+		node = node.parent
 	}
 
-	// otherwise we have reached the (grand*)parent node that has a  non-nil right
-	// side. Go to the left most node, which is the right neighbor of the caller
-	// node.
-	for !iterator.literal {
-		iterator = iterator.left
+	// go down opposite side until literal has been reached
+	// this is the left neighbor of our start literal
+	for !node.literal {
+		node = node.left
 	}
-
-	// check if literal is actually belonging to the callee, return nil in this
-	// case since the neighbor needs to be from another pair
-	if iterator == n.left || iterator == n.right {
-		return nil, false
-	}
-
-	// GOTCHA!
-	return iterator, true
+	return node, true
 }
 
 func (n *Node) Split() bool {
 	if n.literal && n.number >= 10 {
 		// create left child, with literal floored half
 		left := new(Node)
+		left.parent = n
 		left.literal = true
 		left.number = n.number / 2
 
 		// create right child, with literal ceiled half
 		right := new(Node)
+		right.parent = n
 		right.literal = true
 		right.number = (n.number / 2) + (n.number % 2)
 
@@ -143,7 +145,6 @@ func (n *Node) Split() bool {
 		n.number = 0
 		n.left = left
 		n.right = right
-		n.parent = n
 
 		return true
 	}
@@ -153,11 +154,11 @@ func (n *Node) Split() bool {
 		return false
 	}
 
-	if !n.left.literal && n.left.Split() {
+	if n.left.Split() {
 		return true
 	}
 
-	if !n.right.literal && n.right.Split() {
+	if n.right.Split() {
 		return true
 	}
 
@@ -172,8 +173,18 @@ func (n *Node) Explode(depth int) bool {
 	}
 
 	if depth >= 4 && n.left.literal && n.right.literal {
-		// TODO: find left and right literals via parent
-		n.Reset()
+		if left, ok := n.left.LeftLiteral(); ok {
+			left.number += n.left.number
+		}
+
+		if right, ok := n.right.RightLiteral(); ok {
+			right.number += n.right.number
+		}
+
+		n.left = nil
+		n.right = nil
+		n.literal = true
+		n.number = 0
 		return true
 	}
 
@@ -186,6 +197,17 @@ func (n *Node) Explode(depth int) bool {
 	}
 
 	return false
+}
+
+func (n *Node) Magnitude() int {
+	if n.literal {
+		return n.number
+	}
+
+	left := n.left.Magnitude()
+	right := n.right.Magnitude()
+
+	return 3*left + 2*right
 }
 
 func (n Node) String() string {
@@ -299,14 +321,21 @@ func (s *SnailfishNumber) parse(node *Node) {
 	}
 }
 
-func (s *SnailfishNumber) Add(other SnailfishNumber) {
+func (s *SnailfishNumber) Add(others ...SnailfishNumber) {
+	for _, num := range others {
+		s.AddOne(num)
+	}
+}
+
+func (s *SnailfishNumber) AddOne(other SnailfishNumber) {
 	newRoot := new(Node)
 	newRoot.left = s.root
+	newRoot.left.parent = newRoot
 	newRoot.right = other.root
+	newRoot.right.parent = newRoot
 
 	s.root = newRoot
 
-	fmt.Printf("after addition: %s\n", s.root)
 	// reduce until numbers stay the same
 	for {
 		// explode everything before continuing
@@ -314,29 +343,45 @@ func (s *SnailfishNumber) Add(other SnailfishNumber) {
 			if !s.root.Explode(0) {
 				break
 			}
-			fmt.Printf("after explode:  %s\n", s.root)
 		}
 		// split
 		if !s.root.Split() {
 			break
 		}
-		fmt.Printf("after split:    %s\n", s.root)
 	}
 }
 
 func part1(input []string) int {
 	s := NewSnailfishNumbers(input)
-	sum := s[0]
-	fmt.Printf("befire:         %s\n", sum)
-	for _, num := range s[1:] {
-		sum.Add(num)
-		fmt.Println(sum)
-	}
-	return 0
+	s[0].Add(s[1:]...)
+	return s[0].root.Magnitude()
 }
 
-func part2() {
+func part2(input []string) int {
+	max := 0
+	// go through all unique pairs
+	for i := 0; i < len(input)-1; i++ {
+		for j := i; j < len(input); j++ {
+			a := input[i]
+			b := input[j]
 
+			s := NewSnailfishNumbers([]string{a, b})
+			s[0].Add(s[1])
+			magnitude := s[0].root.Magnitude()
+			if magnitude > max {
+				max = magnitude
+			}
+
+			s = NewSnailfishNumbers([]string{b, a})
+			s[0].Add(s[1])
+			magnitude = s[0].root.Magnitude()
+			if magnitude > max {
+				max = magnitude
+			}
+		}
+	}
+
+	return max
 }
 
 func evalInput(input string) (SnailfishNumber, bool) {
@@ -510,7 +555,7 @@ func shell() {
 			fmt.Println("   exit           exit shell")
 			fmt.Println("   help           show this help")
 			fmt.Println(" <else>           parse input as snail number and add")
-			fmt.Println("                 it to the other numbers on success")
+			fmt.Println("                  it to the other numbers on success")
 		default:
 			if num, ok := evalInput(input); ok {
 				numbers = append(numbers, num)
@@ -525,10 +570,10 @@ func main() {
 		return
 	}
 
-	input := "input_example3"
+	input := "input"
 	fmt.Println("== [ PART 1 ] ==")
 	fmt.Println(part1(util.LoadString(input)))
 
 	fmt.Println("== [ PART 2 ] ==")
-	part2()
+	fmt.Println(part2(util.LoadString(input)))
 }
