@@ -27,19 +27,89 @@ func (n *Node) Reset() {
 	n.left = nil
 	n.right = nil
 	n.parent = nil
-	n.parent = nil
 	n.literal = true
 	n.number = 0
 }
 
-func (n Node) LeftLiteral() {
-	// TODO: find next left literal
-	//       return nil if ther eis none
+func (n *Node) LeftLiteral() (*Node, bool) {
+	// TODO: Check if final left literal node is
+	//       actually one of the caller pair.
 
+	// if literal, go one up since a pair consists of two nodes rather
+	// than one with two numbers.
+	if n.literal {
+		n = n.parent.left
+	}
+
+	iterator := n
+	// go up until left is different to where we came from.
+	// if literal is already very left, this loop will go
+	// until root has been reached
+	for iterator.parent != nil && iterator.parent.left == iterator {
+		iterator = iterator.parent
+	}
+
+	// early return if root has been reached (iterator is nil)
+	if iterator.parent == nil {
+		return nil, false
+	}
+
+	iterator = iterator.parent.left
+
+	// the iterator still remains our literal node. In this case
+	// the caller is the left most.
+	if iterator == n {
+		return nil, false
+	}
+
+	// otherwise we have reached the (grand*)parent node that has a  non-nil left
+	// side. Go to the right most node, which is the left neighbor of the caller
+	// node.
+	for !iterator.literal {
+		iterator = iterator.right
+	}
+
+	// GOTCHA!
+	return iterator, true
 }
-func (n Node) RightLiteral() {
-	// TODO: find next right literal
-	//       return nil if ther eis none
+
+func (n *Node) RightLiteral() (*Node, bool) {
+	// if literal, go one up since a pair consists of two nodes rather
+	// than one with two numbers.
+	if n.literal {
+		n = n.parent.right
+	}
+
+	iterator := n
+	// go up until right is different to where we came from.
+	// if literal is already very right, this loop will go
+	// until root has been reached
+	for iterator.parent != nil && iterator.parent.right == iterator {
+		iterator = iterator.parent
+	}
+
+	// early return if root has been reached (iterator is nil)
+	if iterator.parent == nil {
+		return nil, false
+	}
+
+	iterator = iterator.parent.right
+
+	// the iterator still remains our literal node. In this case
+	// the caller is the right most.
+	if iterator == n {
+		return nil, false
+	}
+
+	// otherwise we have reached the (grand*)parent node that has a  non-nil right
+	// side. Go to the left most node, which is the right neighbor of the caller
+	// node.
+	for !iterator.literal {
+		iterator = iterator.left
+	}
+
+	// GOTCHA!
+	return iterator, true
 }
 
 func (n *Node) Split() bool {
