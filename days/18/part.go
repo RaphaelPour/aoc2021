@@ -34,14 +34,14 @@ func (n *Node) Reset() {
 func (n *Node) LeftLiteral() (*Node, bool) {
 	// TODO: Check if final left literal node is
 	//       actually one of the caller pair.
+	iterator := n
 
 	// if literal, go one up since a pair consists of two nodes rather
 	// than one with two numbers.
 	if n.literal {
-		n = n.parent.left
+		iterator = n.parent
 	}
 
-	iterator := n
 	// go up until left is different to where we came from.
 	// if literal is already very left, this loop will go
 	// until root has been reached
@@ -69,25 +69,33 @@ func (n *Node) LeftLiteral() (*Node, bool) {
 		iterator = iterator.right
 	}
 
+	// check if literal is actually belonging to the callee, return nil in this
+	// case since the neighbor needs to be from another pair
+	if iterator == n.left || iterator == n.right {
+		return nil, false
+	}
+
 	// GOTCHA!
 	return iterator, true
 }
 
 func (n *Node) RightLiteral() (*Node, bool) {
+	// 1. go up until previous node is not the right of the current one
+	// 2. go down left most until literal
+
+	iterator := n
 	// if literal, go one up since a pair consists of two nodes rather
 	// than one with two numbers.
 	if n.literal {
-		n = n.parent.right
+		iterator = n.parent
 	}
 
-	iterator := n
 	// go up until right is different to where we came from.
 	// if literal is already very right, this loop will go
 	// until root has been reached
 	for iterator.parent != nil && iterator.parent.right == iterator {
 		iterator = iterator.parent
 	}
-
 	// early return if root has been reached (iterator is nil)
 	if iterator.parent == nil {
 		return nil, false
@@ -106,6 +114,12 @@ func (n *Node) RightLiteral() (*Node, bool) {
 	// node.
 	for !iterator.literal {
 		iterator = iterator.left
+	}
+
+	// check if literal is actually belonging to the callee, return nil in this
+	// case since the neighbor needs to be from another pair
+	if iterator == n.left || iterator == n.right {
+		return nil, false
 	}
 
 	// GOTCHA!

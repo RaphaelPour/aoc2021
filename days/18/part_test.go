@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -108,6 +109,8 @@ func TestRightNeighbor(t *testing.T) {
 	node, ok = twoNode.RightLiteral()
 	require.True(t, ok)
 	require.Equal(t, rightNode, node)
+
+	fmt.Println("--------")
 
 	node, ok = leftNode.RightLiteral()
 	require.True(t, ok)
