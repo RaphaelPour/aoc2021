@@ -7,43 +7,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestExample(t *testing.T) {
+func TestExample1(t *testing.T) {
 	require.Equal(t, 35, part1(util.LoadString("input_example")))
 }
 
-func TestCalcIndex1(t *testing.T) {
-	tm := NewTrenchMap([]string{
-		".#",
-		"",
-		"...",
-		"...",
-		"..#",
-	})
-
-	require.Equal(t, 0, tm.CalcIndex(0, 0))
-	require.Equal(t, 1, tm.CalcIndex(1, 1))
-	require.Equal(t, 16, tm.CalcIndex(2, 2))
-	require.Equal(t, 256, tm.CalcIndex(3, 3))
+func TestExample2(t *testing.T) {
+	require.Equal(t, 3351, part2(util.LoadString("input_example")))
 }
 
-func TestCalcIndex2(t *testing.T) {
-	tm := NewTrenchMap([]string{
-		".#",
-		"",
-		"###",
-		"###",
-		"###",
-	})
+func TestRealInput1(t *testing.T) {
+	require.Equal(t, 5306, part1(util.LoadString("input")))
+}
 
-	require.Equal(t, 1, tm.CalcIndex(-1, -1))
-	require.Equal(t, 27, tm.CalcIndex(0, 0))
-	require.Equal(t, 511, tm.CalcIndex(1, 1))
-	require.Equal(t, 432, tm.CalcIndex(2, 2))
-	require.Equal(t, 256, tm.CalcIndex(3, 3))
+func TestRealInput2(t *testing.T) {
+	require.Equal(t, 17497, part2(util.LoadString("input")))
+}
 
-	// bottom left corner
-	require.Equal(t, 64, tm.CalcIndex(-1, 3))
+func BenchmarkPart1(b *testing.B) {
+	input := util.LoadString("input")
+	for i := 0; i < b.N; i++ {
+		part1(input)
+	}
+}
 
-	// top right corner
-	require.Equal(t, 4, tm.CalcIndex(3, -1))
+func BenchmarkPart2(b *testing.B) {
+	input := util.LoadString("input")
+	for i := 0; i < b.N; i++ {
+		part2(input)
+	}
 }
