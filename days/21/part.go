@@ -13,6 +13,7 @@ type Game struct {
 	player1Score, player2Score int
 	player1Pos, player2Pos     int
 	round                      int
+	cache                      []int
 }
 
 func NewGame(input []string) *Game {
@@ -37,10 +38,21 @@ func NewGame(input []string) *Game {
 		panic(fmt.Sprintf("error converting %s", match[1]))
 	}
 
+	cache := make([]int, 7)
+	for i := 1; i <= 3; i++ {
+		for j := 1; j <= 3; j++ {
+			for k := 1; k <= 3; k++ {
+				index := (i + j + k) - 3
+				cache[index]++
+			}
+		}
+	}
+
 	return &Game{
 		player1Pos: player1,
 		player2Pos: player2,
 		dice:       1,
+		cache:      cache,
 	}
 }
 
@@ -65,6 +77,21 @@ func (g *Game) turn() (int, bool) {
 	return 0, false
 }
 
+func (g *Game) quantumTurn(currentScore, otherScore, currentPos, otherPos int) (int, int) {
+	currentWins, otherWins := 0, 0
+	for i := 3; i <= 9; i++ {
+		pos := ((currentPos + i - 1) % 10) + 1
+		if currentScore+pos >= 21 {
+			currentWins += g.cache[i-3]
+		} else {
+			other, current := g.quantumTurn2(otherScore, currentScore+pos, otherPos, pos)
+			currentWins += current * g.cache[i-3]
+			otherWins += other * g.cache[i-3]
+		}
+	}
+	return currentWins, otherWins
+}
+
 func part1(input []string) int {
 	game := NewGame(input)
 	for {
@@ -74,8 +101,10 @@ func part1(input []string) int {
 	}
 }
 
-func part2() {
+func part2(input []string) int {
 	// count of sums that add up to 21
+	game := NewGame(input)
+	return util.Max(game.quantumTurn2(0, 0, game.player1Pos, game.player2Pos))
 }
 
 func main() {
@@ -84,5 +113,5 @@ func main() {
 	fmt.Println(part1(util.LoadString(input)))
 
 	fmt.Println("== [ PART 2 ] ==")
-	part2()
+	fmt.Println(part2(util.LoadString(input)))
 }
