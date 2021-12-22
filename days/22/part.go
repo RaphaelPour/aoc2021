@@ -19,6 +19,17 @@ type Range struct {
 	from, to int
 }
 
+func (r Range) Intersection(other Range) (*Range, bool) {
+	if other.from > r.to {
+		return nil, false
+	}
+
+	return &Range{
+		from: util.Max(other.from, r.from),
+		to:   util.Min(other.to, r.to),
+	}, true
+}
+
 func (r Range) String() string {
 	return fmt.Sprintf("%d..%d", r.from, r.to)
 }
