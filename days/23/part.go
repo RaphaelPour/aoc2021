@@ -65,10 +65,10 @@ func (a Amphipod) GoalReached() bool {
 	return a.pos == a.goalLow || a.pos == a.goalHigh
 }
 
-func (a Amphipod) Move(x, y int) Amphipod {
+func (a Amphipod) Move(x, y int) (Amphipod, int) {
 	a.pos.x += x
 	a.pos.y += y
-	return a
+	return a, (x + y) * energyMap[a.kind]
 }
 
 func (a Amphipod) String() string {
@@ -98,12 +98,139 @@ func (p Point) String() string {
 type Situation struct {
 	fields    [][]int
 	amphipods map[int]Amphipods
+	cache     map[CacheConfig]bool
+}
+
+type CacheConfig struct {
+	a1, a2, b1, b2, c1, c2, d1, d2 Amphipod
+}
+
+func (s *Situation) StartSearch() int {
+	ok := false
+	cost := 0
+	for limit := 1; !ok; limit++ {
+		s.cache = make(map[CacheConfig]bool)
+
+		cost, ok = s.Search(
+			s.amphipods[AMBER][0], s.amphipods[AMBER][1],
+			s.amphipods[BRONZE][0], s.amphipods[BRONZE][1],
+			s.amphipods[COPPER][0], s.amphipods[COPPER][1],
+			s.amphipods[DESERT][0], s.amphipods[DESERT][1],
+			0, limit,
+		)
+		fmt.Println(limit, ":", cost)
+	}
+	return cost
+}
+
+func (s *Situation) Search(a1, a2, b1, b2, c1, c2, d1, d2 Amphipod, energy, limit int) (int, bool) {
+	// abort if energy limit has been reached
+	if energy > limit {
+		fmt.Println("LIMIT: ", energy, ">", limit)
+		return 0, false
+	}
+
+	if a1.GoalReached() && a2.GoalReached() &&
+		b1.GoalReached() && b2.GoalReached() &&
+		c1.GoalReached() && c2.GoalReached() &&
+		d1.GoalReached() && d2.GoalReached() {
+		fmt.Println("GOAL", energy)
+		return energy, true
+	}
+
+	min := 1000000000000000
+	anyOk := false
+	for y := -1; y <= 1; y++ {
+		for x := -1; x <= 1; x++ {
+			if x == 0 && y == 0 {
+				continue
+			}
+
+			n, cost := a1.Move(x, y)
+			if _, ok := s.cache[CacheConfig{n, a2, b1, b2, c1, c2, d1, d2}]; ok {
+				return 0, false
+			}
+			s.cache[CacheConfig{n, a2, b1, b2, c1, c2, d1, d2}] = true
+			if e, ok := s.Search(n, a2, b1, b2, c1, c2, d1, d2, energy+cost, limit); ok && e < min {
+				min = e
+				anyOk = true
+			}
+
+			n, cost = a2.Move(x, y)
+			if _, ok := s.cache[CacheConfig{a1, n, b1, b2, c1, c2, d1, d2}]; ok {
+				return 0, false
+			}
+			s.cache[CacheConfig{a1, n, b1, b2, c1, c2, d1, d2}] = true
+			if e, ok := s.Search(a1, n, b1, b2, c1, c2, d1, d2, energy+cost, limit); ok && e < min {
+				min = e
+				anyOk = true
+			}
+
+			n, cost = b1.Move(x, y)
+			if _, ok := s.cache[CacheConfig{a1, a2, n, b2, c1, c2, d1, d2}]; ok {
+				return 0, false
+			}
+			s.cache[CacheConfig{a1, a2, n, b2, c1, c2, d1, d2}] = true
+			if e, ok := s.Search(a1, a2, n, b2, c1, c2, d1, d2, energy+cost, limit); ok && e < min {
+				min = e
+				anyOk = true
+			}
+			n, cost = b2.Move(x, y)
+			if _, ok := s.cache[CacheConfig{a1, a2, b1, n, c1, c2, d1, d2}]; ok {
+				return 0, false
+			}
+			s.cache[CacheConfig{a1, a2, b1, n, c1, c2, d1, d2}] = true
+			if e, ok := s.Search(a1, a2, b1, n, c1, c2, d1, d2, energy+cost, limit); ok && e < min {
+				min = e
+				anyOk = true
+			}
+			n, cost = c1.Move(x, y)
+			if _, ok := s.cache[CacheConfig{a1, a2, b1, b2, n, c2, d1, d2}]; ok {
+				return 0, false
+			}
+			s.cache[CacheConfig{a1, a2, b1, b2, n, c2, d1, d2}] = true
+			if e, ok := s.Search(a1, a2, b1, b2, n, c2, d1, d2, energy+cost, limit); ok && e < min {
+				min = e
+				anyOk = true
+			}
+			n, cost = c2.Move(x, y)
+			if _, ok := s.cache[CacheConfig{a1, a2, b1, b2, c1, n, d1, d2}]; ok {
+				return 0, false
+			}
+			s.cache[CacheConfig{a1, a2, b1, b2, c1, n, d1, d2}] = true
+			if e, ok := s.Search(a1, a2, b1, b2, c1, n, d1, d2, energy+cost, limit); ok && e < min {
+				min = e
+				anyOk = true
+			}
+			n, cost = d1.Move(x, y)
+			if _, ok := s.cache[CacheConfig{a1, a2, b1, b2, c1, c2, n, d2}]; ok {
+				return 0, false
+			}
+			s.cache[CacheConfig{a1, a2, b1, b2, c1, c2, n, d2}] = true
+			if e, ok := s.Search(a1, a2, b1, b2, c1, c2, n, d2, energy+cost, limit); ok && e < min {
+				min = e
+				anyOk = true
+			}
+			n, cost = d2.Move(x, y)
+			s.cache[CacheConfig{a1, a2, b1, b2, c1, c2, d1, n}] = true
+			if _, ok := s.cache[CacheConfig{a1, a2, b1, b2, c1, c2, d1, n}]; ok {
+				return 0, false
+			}
+			if e, ok := s.Search(a1, a2, b1, b2, c1, c2, d1, n, energy+cost, limit); ok && e < min {
+				min = e
+				anyOk = true
+			}
+		}
+	}
+
+	return min, anyOk
 }
 
 func NewSituation(input []string) *Situation {
 	s := new(Situation)
 	s.fields = make([][]int, len(input))
 	s.amphipods = make(map[int]Amphipods)
+	s.cache = make(map[CacheConfig]bool)
 	for i := range input {
 		s.fields[i] = make([]int, len(input[0]))
 		for j := range input[i] {
@@ -155,12 +282,13 @@ func (s Situation) Dump(withAmphipods bool) {
 		}
 		fmt.Println("")
 	}
+
 }
 
 func part1(input []string) int {
 	s := NewSituation(input)
 	s.Dump(true)
-	return 0
+	return s.StartSearch()
 }
 
 func part2() {
