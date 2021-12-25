@@ -63,20 +63,20 @@ func (s SeaFloor) HasSoutheighbour(x, y int) bool {
 }
 
 func (s *SeaFloor) MoveLoop() int {
-	newFields := make([][]int, len(s.fields))
 
 	var round int
 	anyMove := true
 	for anyMove {
+		newFields := make([][]int, len(s.fields))
 		anyMove = false
 
-		fmt.Printf(" --- %d ---\n", round)
-		s.Dump()
+		//fmt.Printf(" --- %d ---\n", round)
+		// s.Dump()
 
 		// process east
 		for y := range s.fields {
+			newFields[y] = make([]int, len(s.fields[y]))
 			for x := range s.fields[y] {
-				newFields[y] = make([]int, len(s.fields[y]))
 				if s.fields[y][x] != EAST {
 					continue
 				}
@@ -86,11 +86,12 @@ func (s *SeaFloor) MoveLoop() int {
 				}
 
 				// check if neighbor
-				if s.fields[y][nextX] == EMPTY && newFields[y][nextX] == EMPTY {
+				if s.fields[y][nextX] == EMPTY {
 					newFields[y][nextX] = EAST
-					s.fields[y][x] = EMPTY
 					anyMove = true
+					// fmt.Printf("move east %d,%d -> %d,%d\n", x, y, nextX, y)
 				} else {
+					// fmt.Printf("leave east %d,%d\n", x, y)
 					newFields[y][x] = EAST
 				}
 			}
@@ -99,7 +100,6 @@ func (s *SeaFloor) MoveLoop() int {
 		// process south
 		for y := range s.fields {
 			for x := range s.fields[y] {
-				newFields[y] = make([]int, len(s.fields[y]))
 				if s.fields[y][x] != SOUTH {
 					continue
 				}
@@ -109,17 +109,21 @@ func (s *SeaFloor) MoveLoop() int {
 				}
 
 				// check if neighbor
-				if s.fields[nextY][x] == EMPTY && newFields[nextY][x] == EMPTY {
+				if s.fields[nextY][x] != SOUTH && newFields[nextY][x] != EAST {
 					newFields[nextY][x] = SOUTH
-					s.fields[y][x] = EMPTY
 					anyMove = true
+					//fmt.Printf("move south %d,%d -> %d,%d\n", x, y, x, nextY)
 				} else {
 					newFields[y][x] = SOUTH
+					//fmt.Printf("leave south %d,%d\n", x, y)
 				}
 			}
 		}
 		s.fields = newFields
 		round++
+		if round%100 == 0 {
+			fmt.Print(".")
+		}
 	}
 	return round
 }
@@ -147,7 +151,7 @@ func part2() {
 }
 
 func main() {
-	input := "input_example2"
+	input := "input"
 	fmt.Println("== [ PART 1 ] ==")
 	fmt.Println(part1(util.LoadString(input)))
 
