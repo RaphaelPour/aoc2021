@@ -164,6 +164,46 @@ func (a *ALU) Run(rawInput int) (int, bool) {
 	return a.variables["z"], true
 }
 
+func reduce1(w, z int) {
+	x := z
+	x = x % 26
+	z /= 1
+	x += 14
+	if x != w {
+		x = 1
+	} else {
+		x = 0
+	}
+
+	y := 25
+	y *= x
+	y++
+	z *= y
+	y = w
+	y += 8
+	y *= x
+	z += y
+
+	return z
+}
+
+func reduce2(w, z int) {
+	x := (z % 26) + 14
+	z /= 1
+	if x != w {
+		x = 1
+	} else {
+		x = 0
+	}
+
+	y := x*25 + 1
+	z *= y
+	y = (w + 8) * x
+	z += y
+
+	return z
+}
+
 func compute(start, length int, input []string, sem *semaphore.Weighted) {
 	defer sem.Release(1)
 	a := NewALU(input)
