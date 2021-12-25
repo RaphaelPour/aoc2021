@@ -114,15 +114,14 @@ func (a ALU) getValue(ins Instruction) int {
 	panic(fmt.Sprintf("unknown variable %s", ins.op2))
 }
 
-func (a *ALU) Run(rawInput int) bool {
+func (a *ALU) Run(rawInput int) (int, bool) {
 	a.ResetRAM()
 	input := strconv.Itoa(rawInput)
 	for _, ins := range a.program {
 		switch ins.command {
 		case INPUT:
 			if len(input) == 0 {
-				fmt.Println("input is too short")
-				return false
+				return 0, false
 			}
 			num, err := strconv.Atoi(string(input[0]))
 			if err != nil {
@@ -131,7 +130,7 @@ func (a *ALU) Run(rawInput int) bool {
 			a.variables[ins.op1] = num
 			if num == 0 {
 				// skip zero digits
-				return false
+				return 0, false
 			}
 			if len(input) > 0 {
 				input = input[1:len(input)]
@@ -162,15 +161,14 @@ func (a *ALU) Run(rawInput int) bool {
 			panic(fmt.Sprintf("Unknown instruction %d\n", ins.command))
 		}
 	}
-
-	return a.variables["z"] == 0
+	return a.variables["z"], true
 }
 
 func compute(start, length int, input []string, sem *semaphore.Weighted) {
 	defer sem.Release(1)
 	a := NewALU(input)
 	for i := start; i > start-length; i-- {
-		if a.Run(i) {
+		if _, ok := a.Run(i); ok {
 			fmt.Println(i)
 			break
 		}
@@ -180,7 +178,7 @@ func compute(start, length int, input []string, sem *semaphore.Weighted) {
 	}
 }
 
-func part1(input []string) int {
+func parallel(input []string) {
 	start := 99999999999999
 	chunkSize := 10000000
 
@@ -194,6 +192,37 @@ func part1(input []string) int {
 	}
 
 	sem.Acquire(ctx, int64(runtime.GOMAXPROCS(0)))
+}
+
+func (a ALU) analyze(digit, base int) (int, int) {
+	min, max := 100000000000000000, 0
+	minDigit, maxDigit := 0, 0
+	for i := 1; i <= 9; i++ {
+		a.Run(i*util.Pow(10, digit) + base)
+		z := a.variables["z"]
+
+		if z < min {
+			min = z
+			minDigit = i
+		}
+		if z > max {
+			max = z
+			maxDigit = i
+		}
+		fmt.Println(i, a.variables)
+	}
+
+	return minDigit, maxDigit
+}
+
+func part1(input []string) int {
+	a := NewALU(input)
+	number := 0
+	for digit := 0; digit < 14; digit++ {
+		_, max := a.analyze(digit, number)
+		number += max * util.Pow(10, digit)
+		fmt.Println(number)
+	}
 	return 0
 }
 
