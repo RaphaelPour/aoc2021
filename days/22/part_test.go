@@ -6,16 +6,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRange(t *testing.T) {
-	r1 := Range{10, 20}
-	r2 := Range{21, 30}
-	r3 := Range{15, 25}
+func TestVolume(t *testing.T) {
+	c := Cube{
+		from: Vector3{0, 0, 0},
+		to:   Vector3{2, 2, 2},
+	}
+	require.Equal(t, 8, c.Volume())
 
-	r, ok := r1.Intersection(r2)
-	require.False(t, ok)
-	require.Nil(t, r)
-
-	r, ok = r1.Intersection(r3)
-	require.True(t, ok)
-	require.Equal(t, Range{15, 20}, *r)
+	c = Cube{
+		from: Vector3{-10, -1, 0},
+		to:   Vector3{-8, 1, 2},
+	}
+	require.Equal(t, 8, c.Volume())
 }

@@ -138,17 +138,8 @@ func part1(input []string) int {
 	return len(NewCubes(input).cubeMap)
 }
 
-func part2(input []string) int {
-	c := NewCubes(input)
-	c.Reboot()
-	return c.CubesOnCount()
-}
-
 func main() {
 	input := "input"
 	fmt.Println("== [ PART 1 ] ==")
 	fmt.Println(part1(util.LoadString(input)))
-
-	fmt.Println("== [ PART 2 ] ==")
-	fmt.Println(part2(util.LoadString(input)))
 }
