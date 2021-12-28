@@ -302,4 +302,7 @@ func main() {
 
 	fmt.Println("== [ PART 2 ] ==")
 	part2()
+	fmt.Println("too high: 42756")
+	fmt.Println("bad: 42678, 42588")
+	fmt.Println("min: 40284")
 }
