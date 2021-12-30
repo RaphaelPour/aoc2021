@@ -7,4 +7,5 @@ require (
 	github.com/deadsy/sdfx v0.0.0-20211104010131-9b556f64c8be
 	github.com/fatih/color v1.13.0
 	github.com/stretchr/testify v1.7.0
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )
