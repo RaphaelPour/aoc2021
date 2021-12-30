@@ -59,6 +59,7 @@ type ALU struct {
 func NewALU(input []string) *ALU {
 	a := new(ALU)
 	a.program = make([]Instruction, len(input))
+	a.variables = make(map[string]int)
 	for i, line := range input {
 		parts := strings.Split(line, " ")
 		if len(parts) < 2 {
@@ -96,12 +97,10 @@ func NewALU(input []string) *ALU {
 }
 
 func (a *ALU) ResetRAM() {
-	a.variables = map[string]int{
-		"x": 0,
-		"y": 0,
-		"z": 0,
-		"w": 0,
-	}
+	a.variables["x"] = 0
+	a.variables["y"] = 0
+	a.variables["z"] = 0
+	a.variables["w"] = 0
 }
 
 func (a ALU) getValue(ins Instruction) int {
@@ -164,7 +163,7 @@ func (a *ALU) Run(rawInput int) (int, bool) {
 	return a.variables["z"], true
 }
 
-func reduce1(w, z int) {
+func reduce1(w, z int) int {
 	x := z
 	x = x % 26
 	z /= 1
@@ -187,7 +186,16 @@ func reduce1(w, z int) {
 	return z
 }
 
-func reduce2(w, z int) {
+func startReduce2(input string) int {
+	z := 0
+	for _, digit := range input {
+		num := util.ToInt(string(digit))
+		z = reduce2(num, z)
+	}
+	return z
+}
+
+func reduce2(w, z int) int {
 	x := (z % 26) + 14
 	z /= 1
 	if x != w {
@@ -206,21 +214,25 @@ func reduce2(w, z int) {
 
 func compute(start, length int, input []string, sem *semaphore.Weighted) {
 	defer sem.Release(1)
-	a := NewALU(input)
+	// a := NewALU(input)
 	for i := start; i > start-length; i-- {
-		if _, ok := a.Run(i); ok {
-			fmt.Println(i)
-			break
+		if i%26 != 0 {
+			continue
 		}
-		if i%1000000 == 0 {
-			fmt.Print(".")
+		num := strconv.Itoa(i)
+		if strings.Contains(num, "0") {
+			continue
+		}
+
+		if startReduce2(num) == 0 {
+			fmt.Println(num)
 		}
 	}
 }
 
 func parallel(input []string) {
 	start := 99999999999999
-	chunkSize := 10000000
+	chunkSize := 100000000
 
 	ctx := context.Background()
 	sem := semaphore.NewWeighted(int64(runtime.GOMAXPROCS(0)))
@@ -256,13 +268,7 @@ func (a ALU) analyze(digit, base int) (int, int) {
 }
 
 func part1(input []string) int {
-	a := NewALU(input)
-	number := 0
-	for digit := 0; digit < 14; digit++ {
-		_, max := a.analyze(digit, number)
-		number += max * util.Pow(10, digit)
-		fmt.Println(number)
-	}
+	parallel(input)
 	return 0
 }
 
@@ -277,6 +283,7 @@ func main() {
 	fmt.Println("too high: 99999999901273")
 	fmt.Println("too high: 99999969999982")
 	fmt.Println("too low + valid: 19975391969643")
+	fmt.Println("bad + valid: 79975391969649")
 
 	fmt.Println("== [ PART 2 ] ==")
 	part2()
