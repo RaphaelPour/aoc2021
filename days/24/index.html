@@ -1,0 +1,148 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>MONAD</title>
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <style>
+        body {
+           background: #0f0f23;
+           color: #cccccc;
+           font-family: "Source Code Pro", monospace;
+        }
+
+        input[type=number] {
+           font-family: "Source Code Pro", monospace;
+           background: #0f0f23;
+           color: #009900;
+           width: 100%;
+           font-size: 16px;
+        }
+
+        .gotcha {
+            color: lime;
+        }
+
+        .z {
+            font-size: 13px;
+            min-width: 10px;
+            color: #cccc00
+        }
+
+        .solution {
+            text-align: center;
+        }
+    </style>
+    </head>
+    <body>
+        <div style='text-align: center'>
+            <h1>MONAD</h1>
+        </div>
+        <div id='monad'>
+            <table style='width: 100%'>
+                <tr>
+                    <td><input type="number" min="1" max="9" step="1" value="9" v-on:click="startReduce();" v-model="d1"></td>
+            <td><input type="number" min="1" max="9" step="1" value="9"  v-on:click="startReduce();" v-model="d2" ></td> 
+            <td><input type="number" min="1" max="9" step="1" value="9"  v-on:click="startReduce();" v-model="d3" ></td> 
+            <td><input type="number" min="1" max="9" step="1" value="9"  v-on:click="startReduce();" v-model="d4" ></td>
+            <td><input type="number" min="1" max="9" step="1" value="9"  v-on:click="startReduce();" v-model="d5" ></td> 
+            <td><input type="number" min="1" max="9" step="1" value="9"  v-on:click="startReduce();" v-model="d6" ></td> 
+            <td><input type="number" min="1" max="9" step="1" value="9"  v-on:click="startReduce();" v-model="d7" ></td> 
+            <td><input type="number" min="1" max="9" step="1" value="9"  v-on:click="startReduce();" v-model="d8" ></td> 
+            <td><input type="number" min="1" max="9" step="1" value="9"  v-on:click="startReduce();" v-model="d9" ></td> 
+            <td><input type="number" min="1" max="9" step="1" value="9"  v-on:click="startReduce();" v-model="d10" ></td> 
+            <td><input type="number" min="1" max="9" step="1" value="9"  v-on:click="startReduce();" v-model="d11" ></td> 
+            <td><input type="number" min="1" max="9" step="1" value="9"  v-on:click="startReduce();" v-model="d12" ></td> 
+            <td><input type="number" min="1" max="9" step="1" value="9"  v-on:click="startReduce();" v-model="d13" ></td> 
+            <td><input type="number" min="1" max="9" step="1" value="9"  v-on:click="startReduce();" v-model="d14" ></td> 
+                    </td>
+                </tr>
+                <tr v-html="zList"></tr>
+            </table>
+            <div class='solution'>
+                {{ "" + d1+d2+d3+d4+d5+d6+d7+d8+d9+d10+d11+d12+d13+d14}}
+            </div>
+        </div>
+        <script>
+            var app = new Vue({
+                el: "#monad",
+                data: {
+                    d1:9,
+                    d2:9,
+                    d3:9,
+                    d4:9,
+                    d5:9,
+                    d6:9,
+                    d7:9,
+                    d8:9,
+                    d9:9,
+                    d10:9,
+                    d11:9,
+                    d12:9,
+                    d13:9,
+                    d14:9,
+                    params: [
+                        [1, 14, 8],
+                        [1, 13, 8],
+                        [1, 13, 3],
+                        [1, 12, 10],
+                        [26, -12, 8],
+                        [1, 12, 8],
+                        [26, -2, 8],
+                        [26, -11, 5],
+                        [1, 13, 9],
+                        [1, 14, 3],
+                        [26, 0, 4],
+                        [26, -12, 9],
+                        [26, -13, 2],
+                        [26, -6, 7]
+                    ],
+                    zList: ""
+                },
+                created: function () {
+                    this.startReduce()
+                },
+                methods: {
+                    startReduce: function() {
+                        var digits = [
+                            this.d1,this.d2,this.d3,this.d4,this.d5,this.d6,this.d7,
+                            this.d8,this.d9,this.d10,this.d11,this.d12,this.d13,this.d14,
+                        ]
+                            
+                        var z = 0
+                        this.zList = ""
+                        digits.forEach((digit,index) => {
+                            z = this.reduce(
+                                parseInt(digit), 
+                                z,
+                                this.params[index][0],
+                                this.params[index][1],
+                                this.params[index][2],
+                                )
+                            if (z == 0) {
+                                this.zList += "<td class='gotcha z'>" + z + "</td>"
+                            } else {
+                                this.zList += "<td class='z'>" + z + "</td>"
+                            }
+                        })
+                    },
+                    reduce: function(w,z,p1,p2,p3) {
+                        var x = (z % 26) + p2
+                        z /= p1
+                        if (x != w) {
+                            x = 1
+                        } else {
+                            x = 0
+                        }
+
+                        var y = x*25 + 1
+                        z *= y
+                        y = (w + p3) * x
+                        z += y
+
+                        return parseInt(z)
+                    }
+                }
+            });
+        </script>
+    </body>
+</html>
