@@ -275,6 +275,8 @@ func main() {
 	fmt.Println("== [ PART 1 ] ==")
 	fmt.Println(part1(util.LoadString(input)))
 	fmt.Println("too high: 99999999901273")
+	fmt.Println("too high: 99999969999982")
+	fmt.Println("too low + valid: 19975391969643")
 
 	fmt.Println("== [ PART 2 ] ==")
 	part2()
