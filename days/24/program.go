@@ -41,10 +41,110 @@ func ToIntArray(input int) []int {
 	return result
 }
 
-func start(input int, verbose bool) int {
+func Join(in []int) string {
+	out := ""
+	for i := len(in) - 1; i >= 0; i-- {
+		out += fmt.Sprintf("%d", in[i])
+	}
+	return out
+}
+
+func startLoop2() {
+	/*
+	 *           1111
+	 * 01234567890123
+	 * _99____19__64_
+	 * _99____19__64_
+	 * _99____19__64_
+	 * _99____19__64_
+	 * _99____19__64_
+	 * 1 + 2 must be 9,
+	 * 7 must be 1
+	 * 8 must be 9
+	 */
+	ctx := context.Background()
+	sem := semaphore.NewWeighted(int64(runtime.GOMAXPROCS(0)))
+	for w1 := 1; w1 <= 9; w1++ {
+		for w2 := 1; w2 <= 9; w2++ {
+			for w3 := 1; w3 <= 9; w3++ {
+				for w5 := 1; w5 <= 9; w5++ {
+					sem.Acquire(ctx, 1)
+					go func(w1, w2, w3, w5 int, sem *semaphore.Weighted) {
+						defer sem.Release(1)
+						for w6 := 1; w6 <= 9; w6++ {
+							for w8 := 1; w8 <= 9; w8++ {
+								for w9 := 1; w9 <= 9; w9++ {
+									for w10 := 1; w10 <= 9; w10++ {
+										for w11 := 1; w11 <= 9; w11++ {
+											for w12 := 1; w12 <= 9; w12++ {
+												for w13 := 1; w13 <= 9; w13++ {
+													w := []int{w13, w12, w11, w10, w9, w8, 1, w6, w5, 10 - w3, w3, w2, w1, 1}
+													if z := start(w, false); z == 0 {
+														fmt.Println(">>", Join(w), "<<")
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+						fmt.Print(".")
+					}(w1, w2, w3, w5, sem)
+				}
+			}
+		}
+	}
+	sem.Acquire(ctx, int64(runtime.GOMAXPROCS(0)))
+}
+func startLoop1() {
+	/*
+	 *           1111
+	 * 01234567890123
+	 * _99____19__64_
+	 * _99____19__64_
+	 * _99____19__64_
+	 * _99____19__64_
+	 * _99____19__64_
+	 * 1 + 2 must be 9,
+	 * 7 must be 1
+	 * 8 must be 9
+	 */
+	ctx := context.Background()
+	sem := semaphore.NewWeighted(int64(runtime.GOMAXPROCS(0)))
+	for w0 := 1; w0 <= 9; w0++ {
+		for w3 := 1; w3 <= 9; w3++ {
+			sem.Acquire(ctx, 1)
+			go func(w0, w3 int, sem *semaphore.Weighted) {
+				defer sem.Release(1)
+				for w4 := 1; w4 <= 9; w4++ {
+					for w5 := 1; w5 <= 9; w5++ {
+						for w6 := 1; w6 <= 9; w6++ {
+							for w9 := 1; w9 <= 9; w9++ {
+								for w10 := 1; w10 <= 9; w10++ {
+									for w13 := 1; w13 <= 9; w13++ {
+										w := []int{w13, 4, 6, w10, w9, 9, 1, w6, w5, w4, w3, 9, 9, w0}
+										if z := start(w, false); z == 0 {
+											fmt.Println(">>", Join(w), "<<")
+											os.Exit(0)
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				fmt.Print(".")
+			}(w0, w3, sem)
+		}
+	}
+	sem.Acquire(ctx, int64(runtime.GOMAXPROCS(0)))
+}
+
+func start(digits []int, verbose bool) int {
 	index := 0
 	z := 0
-	digits := ToIntArray(input)
+
 	for i := len(digits) - 1; i >= 0; i-- {
 		w := digits[i]
 		if w == 0 {
@@ -86,6 +186,48 @@ func reduce(w, z, p1, p2, p3 int) int {
 	return z
 }
 
+func bruteForce() {
+	chunk := 1000000
+	ctx := context.Background()
+	sem := semaphore.NewWeighted(int64(runtime.GOMAXPROCS(0)))
+	begin, end := 79975391969649, 99999969999982
+	for i := begin; i < end; i += chunk {
+		sem.Acquire(ctx, 1)
+		go func(offset, length int, sem *semaphore.Weighted) {
+			defer sem.Release(1)
+			for j := offset; j < offset+length; j++ {
+				digits := ToIntArray(j)
+				/*
+				 *           1111
+				 * 01234567890123
+				 * _99____19__64_
+				 * _99____19__64_
+				 * _99____19__64_
+				 * _99____19__64_
+				 * _99____19__64_
+				 *
+				 * Reversed
+				 *           1111
+				 * 01234567890123
+				 * _46__91____99_
+				 * 1 + 2 must be 9,
+				 * 7 must be 1
+				 * 8 must be 9
+				 */
+
+				if digits[1] != 4 || digits[2] != 6 || digits[5] != 9 || digits[6] != 1 || digits[11] != 9 || digits[12] != 9 {
+					continue
+				}
+				if z := start(digits, false); z == 0 {
+					fmt.Println(" >> ", j, " <<")
+				}
+			}
+			fmt.Println(offset + length)
+		}(i, chunk, sem)
+	}
+	sem.Acquire(ctx, int64(runtime.GOMAXPROCS(0)))
+}
+
 func main() {
 	if len(os.Args) == 2 {
 		if os.Args[1] == "shell" {
@@ -111,27 +253,14 @@ func main() {
 					fmt.Printf("unknown input '%s'\n", input)
 					continue
 				}
-				start(num, true)
+				start(ToIntArray(num), true)
 			}
 			num := util.ToInt(os.Args[1])
-			start(num, true)
+			start(ToIntArray(num), true)
 			return
 		}
 	}
-	chunk := 10000000
-	ctx := context.Background()
-	sem := semaphore.NewWeighted(int64(runtime.GOMAXPROCS(0)))
-	for i := 19975399999999; i >= 19975311111111; i -= chunk {
-		sem.Acquire(ctx, 1)
-		go func(offset, length int, sem *semaphore.Weighted) {
-			defer sem.Release(1)
-			for j := offset; j > offset-length; j-- {
-				if z := start(j, false); z == 0 {
-					fmt.Println(" >> ", j, " <<")
-				}
-			}
-			fmt.Println(offset - length + 1)
-		}(i, chunk, sem)
-	}
-	sem.Acquire(ctx, int64(runtime.GOMAXPROCS(0)))
+
+	// bruteForce()
+	startLoop2()
 }
