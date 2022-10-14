@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/RaphaelPour/aoc2021/util"
+	"github.com/RaphaelPour/stellar/math"
 )
 
 const (
@@ -102,7 +103,7 @@ func (d Display) Result() (int, error) {
 			return -1, fmt.Errorf("%s missing in %#v", out, d.Connections)
 		}
 
-		result += num * util.Pow(10, len(d.Output)-i-1)
+		result += num * math.Pow(10, len(d.Output)-i-1)
 	}
 	return result, nil
 }
