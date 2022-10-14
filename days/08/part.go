@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/RaphaelPour/aoc2021/util"
 	"github.com/RaphaelPour/stellar/math"
+	"github.com/RaphaelPour/stellar/input"
 )
 
 const (
@@ -189,8 +189,8 @@ func part2(input []string) int {
 
 func main() {
 	fmt.Println("== [ PART 1 ] ==")
-	fmt.Println(part1(util.LoadDefaultString()))
+	fmt.Println(part1(input.LoadDefaultString()))
 
 	fmt.Println("== [ PART 2 ] ==")
-	fmt.Println(part2(util.LoadDefaultString()))
+	fmt.Println(part2(input.LoadDefaultString()))
 }
